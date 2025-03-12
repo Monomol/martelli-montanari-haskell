@@ -43,7 +43,7 @@ paper_input = MultiSet.fromList [
         ]
     ]
 
-paper_output :: Maybe (Term, Multiequations)
+paper_output :: Maybe (Term, Set Meqn)
 paper_output = Just (Function "f" [Var "x1", Function "g" [Var "x2",Var "x3"]],
     Set.fromList [
         (Set.fromList [Var "x1"], MultiSet.fromOccurList [
@@ -68,7 +68,7 @@ unit1_input = MultiSet.fromList [
     Function "f" [Function "a" []]
     ]
 
-unit1_output :: Maybe (Term, Multiequations)
+unit1_output :: Maybe (Term, Set Meqn)
 unit1_output = Just (Var "x1", Set.fromList [ (Set.fromList [Var "x1"], MultiSet.fromList [Function "f" [Function "a" []]]) ] )
 
 test_unit1 :: Test
@@ -80,7 +80,7 @@ unit2_input = MultiSet.fromList [
     Function "f" [Function "a" []]
     ]
 
-unit2_output :: Maybe (Term, Multiequations)
+unit2_output :: Maybe (Term, Set Meqn)
 unit2_output = Just (Function "f" [Function "a" []], Set.empty)
 
 test_unit2 :: Test
