@@ -42,6 +42,10 @@ fArity :: Term -> Int
 fArity (Function _ x) = length x
 fArity _ = error "not a function"
 
+-- Others
+-- TODO continue here, find how to work with lookup tables and add them
+-- applySub :: Term -> 
+
 type Meqn = (Set Term, MultiSet Term)
 
 -- Predicate
@@ -96,22 +100,54 @@ dec m =
             decNonvar m nonVarMultiset
     )
 
+-- Multiequation reduction and compactification
+meqnIntersect :: Meqn -> Meqn -> Bool
+meqnIntersect (s1, _) (s2, _) = (not . Set.disjoint s1) s2
+
+combineMeqn :: Meqn -> Meqn -> Meqn
+combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, MultiSet.union m1 m2)
+
+combineMeqns :: (Foldable f) => f Meqn -> Meqn
+combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, MultiSet.empty) meqnToCombine
+
+
+compactifyByVar :: U -> Term -> Maybe U
+compactifyByVar u (Var x) = let (u_with_var, u_without_var) = Set.partition (\(s, _) -> Set.member (Var x) s) u in return (Set.union u_without_var ((Set.singleton . combineMeqns) u_with_var))
+compactifyByVar u _ = Nothing
+
+compactifyByVars :: U -> [Term] -> Maybe U
+compactifyByVars u [] = return u
+compactifyByVars u (v:vs) = compactifyByVar u v >>= (\u' -> compactifyByVars u' vs)
+
+compactify :: U -> Maybe U
+compactify u = let (vars, _) = combineMeqns u in compactifyByVars u (Set.toList vars)
+
 -- Unify Part
 
-
-remove_meqn_with_nonempty_m :: U -> Maybe (Meqn, U)
-remove_meqn_with_nonempty_m u =
+removeMeqnWithNonemptyM :: U -> Maybe (Meqn, U)
+removeMeqnWithNonemptyM u =
     let (m_empty, m_nonempty) = (partition meqn_right_empty . Set.toList) u in
         do
             (meqn, m_empty_rest) <- uncons m_empty
             Just (meqn, Set.fromList (m_empty_rest ++ m_nonempty))
 
--- unify :: R -> T
--- unify r =
---     let (t, u) = r in
---         if Set.null u then
---             Just t
---         else
---             do
---                 (removed_meqn, u_rest) <- remove_meqn_with_nonempty_m
+-- unify :: R -> Maybe T
+unify r =
+    let (t, u) = r in
+        if Set.null u then
+            return t
+        else
+            do
+                ((s, m), u_rest) <- removeMeqnWithNonemptyM u
+                (common_part, frontier) <- dec m
+                if any (meqnIntersect (s, m)) frontier then
+                    Nothing
+                else
+
+                    let u_meqn_reduced = (Set.union (Set.insert (s, MultiSet.singleton common_part) u_rest) frontier) in (
+                        do
+                            u_compactified <- compactify u_meqn_reduced
+                            return t
+                    )
+
 
