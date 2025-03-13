@@ -11,13 +11,17 @@ import Data.Maybe (fromJust, isNothing)
 import Data.MultiSet (MultiSet)
 import qualified Data.MultiSet as MultiSet
 
--- Term
+{-
 
+* BASIC TYPES AND ASSOCIATED FUNCTIONS *
+
+-}
+
+-- QQ : What types should I use? Should I as well generalize this and use just some type?
 data Term = Var String
     | Function String [Term]
     deriving (Show, Ord, Eq)
 
--- Predicates
 isConstant :: Term -> Bool
 isConstant (Function _ []) = True
 isConstant _ = False
@@ -30,7 +34,6 @@ hasSingleElem :: [a] -> Bool
 hasSingleElem [_] = True
 hasSingleElem _ = False
 
--- Projections
 fHead :: Term -> String
 fHead (Function x _) = x
 fHead _ = error "not a function"
@@ -39,11 +42,6 @@ fParams :: Term -> [Term]
 fParams (Function _ x) = x
 fParams _ = error "not a function"
 
-fArity :: Term -> Int
-fArity (Function _ x) = length x
-fArity _ = error "not a function"
-
--- Substitution
 -- QQ : This does not much correspond to your implementation from minuska, may be a good show point.
 -- QQ : Should I use maps? How close should the Haskell implementation resemble the Coq counterpart?
 subTVar :: Term -> Term -> Term -> Term
@@ -59,10 +57,18 @@ subT t (st:sts) = let (sub_by, sub_to) = st in subT (subTVar t sub_by sub_to) st
 
 type Meqn = (Set Term, MultiSet Term)
 
+meqnIntersect :: Meqn -> Meqn -> Bool
+meqnIntersect (s1, _) (s2, _) = (not . Set.disjoint s1) s2
+
+combineMeqn :: Meqn -> Meqn -> Meqn
+combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, MultiSet.union m1 m2)
+
+combineMeqns :: (Foldable f) => f Meqn -> Meqn
+combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, MultiSet.empty) meqnToCombine
+
 subMeqn :: Meqn -> [(Term, Term)] -> Meqn
 subMeqn meqn st = let (s, m) = meqn in (s, MultiSet.map (\meqn' -> subT meqn' st) m)
 
--- Predicate
 meqn_right_empty :: Meqn -> Bool
 meqn_right_empty (_, m) = MultiSet.null m
 
@@ -70,11 +76,33 @@ type T =  [Meqn]
 type U = Set Meqn
 type R = (T, U)
 
+uniqueTermName :: Term -> String
+uniqueTermName (Var x) = x
+uniqueTermName (Function x xs) = x ++ (concat . map uniqueTermName) xs
+
+varsOfTerm :: Term ->  Set Term
+varsOfTerm (Var x) = Set.singleton (Var x)
+varsOfTerm (Function _ xs) = (Set.unions . map varsOfTerm) xs
+
+initR :: Term -> Term -> R
+initR t t' =
+    let unique_vars_of_terms = Set.union (varsOfTerm t) (varsOfTerm t')
+        up = (Set.singleton (Var ((uniqueTermName t) ++ (uniqueTermName t'))), MultiSet.fromList [t, t'])
+        u_without_up = Set.map (\x -> (Set.singleton x, MultiSet.empty)) unique_vars_of_terms in ([],  Set.insert up u_without_up)
+
+-- QQ : Should I implement this using maps?
 subUAux :: U -> U -> [(Term, Term)] -> U
-subUAux u u_sub st   | null u = u_sub
+subUAux u u_sub st  | null u = u_sub
                     | otherwise = let (meqn, u_rest) = Set.deleteFindMin u in subUAux u_rest (Set.insert (subMeqn meqn st) u_sub) st
 
--- Dec Part
+subU :: U -> [(Term, Term)] -> U
+subU u st = subUAux u (Set.empty) st
+
+{-
+
+* DECOMPOSITION *
+
+-}
 
 splitVarNonVar :: MultiSet Term -> (MultiSet Term, MultiSet Term)
 splitVarNonVar x = MultiSet.partition isVar x
@@ -118,16 +146,11 @@ dec m =
             decNonvar m nonVarMultiset
     )
 
--- Multiequation reduction and compactification
-meqnIntersect :: Meqn -> Meqn -> Bool
-meqnIntersect (s1, _) (s2, _) = (not . Set.disjoint s1) s2
+{-
 
-combineMeqn :: Meqn -> Meqn -> Meqn
-combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, MultiSet.union m1 m2)
+* COMPACTIFICATION *
 
-combineMeqns :: (Foldable f) => f Meqn -> Meqn
-combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, MultiSet.empty) meqnToCombine
-
+-}
 
 compactifyByVar :: U -> Term -> Maybe U
 compactifyByVar u (Var x) = let (u_with_var, u_without_var) = Set.partition (\(s, _) -> Set.member (Var x) s) u in return (Set.union u_without_var ((Set.singleton . combineMeqns) u_with_var))
@@ -140,7 +163,11 @@ compactifyByVars u (v:vs) = compactifyByVar u v >>= (\u' -> compactifyByVars u' 
 compactify :: U -> Maybe U
 compactify u = let (vars, _) = combineMeqns u in compactifyByVars u (Set.toList vars)
 
--- Unify Part
+{-
+
+* UNIFICATION *
+
+-}
 
 removeMeqnWithNonemptyM :: U -> Maybe (Meqn, U)
 removeMeqnWithNonemptyM u =
@@ -149,24 +176,43 @@ removeMeqnWithNonemptyM u =
             (meqn, m_empty_rest) <- uncons m_empty
             Just (meqn, Set.fromList (m_empty_rest ++ m_nonempty))
 
--- unify :: R -> Maybe T
--- unify r =
---     let (t, u) = r in
---         if Set.null u then
---             return t
---         else
---             do
---                 ((s, m), u_rest) <- removeMeqnWithNonemptyM u
---                 (common_part, frontier) <- dec m
---                 if any (meqnIntersect (s, m)) frontier then
---                     Nothing
---                 else
+unify :: R -> Maybe T
+unify r =
+    let (t, u) = r in
+        if Set.null u then
+            return t
+        else
+            do
+                ((s, m), u_rest) <- removeMeqnWithNonemptyM u
+                (common_part, frontier) <- dec m
+                if any (meqnIntersect (s, m)) frontier then
+                    Nothing
+                else
+                    let sub = zip (Set.toList s) (repeat common_part)
+                        u_meqn_reduced = (Set.union u_rest frontier) in (
+                        do
+                            u_compactified <- compactify u_meqn_reduced
+                            unify ((s, MultiSet.singleton common_part):t, subU u_compactified sub)
+                    )
 
---                     let u_meqn_reduced = (Set.union u_rest frontier) in (
---                         do
---                             u_compactified <- compactify u_meqn_reduced
---                             subU u_compactified
---                             return (t ++ [(s, MultiSet.singleton common_part)])
---                     )
+{-
 
+* PRINTING *
 
+-}
+
+encapsulate :: String -> String -> [String] -> String
+encapsulate l r xs = l ++ (intercalate ", ") xs ++ r
+
+extract_term :: Term -> String
+extract_term (Var x) = x
+extract_term (Function x []) = x 
+extract_term (Function x xs) = x ++ encapsulate "(" ")" (map extract_term xs)
+
+print_sm :: (Term, Set Meqn) -> IO()
+print_sm (f, set_sm) = putStrLn ("Common part\n    " ++ extract_term f ++ "\nFrontier\n{\n" ++ print_set_sm (Set.elems set_sm) ++ "}")
+    where
+        print_m m = ((encapsulate "{ " " }") . (map extract_term) . Set.elems) m
+        print_s s = ((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) s
+        print_set_sm [] = ""
+        print_set_sm ((m, s):sm) = "    " ++ print_m m ++ " = " ++ print_s s ++ ",\n" ++ print_set_sm sm
