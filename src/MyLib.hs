@@ -11,6 +11,7 @@ import Data.Maybe (fromJust, isNothing)
 import Data.MultiSet (MultiSet)
 import qualified Data.MultiSet as MultiSet
 
+-- Term
 
 data Term = Var String
     | Function String [Term]
@@ -42,11 +43,24 @@ fArity :: Term -> Int
 fArity (Function _ x) = length x
 fArity _ = error "not a function"
 
--- Others
--- TODO continue here, find how to work with lookup tables and add them
--- applySub :: Term -> 
+-- Substitution
+-- QQ : This does not much correspond to your implementation from minuska, may be a good show point.
+-- QQ : Should I use maps? How close should the Haskell implementation resemble the Coq counterpart?
+subTVar :: Term -> Term -> Term -> Term
+subTVar (Var y) (Var x) t' = if x == y then t' else (Var y)
+subTVar (Function s ts) v@(Var x) t' = Function s (map (\t -> subTVar t v t') ts)
+-- QQ: should there be rather error?
+subTVar _ _ _ = error "second argument should be variable"
+
+
+subT :: Term -> [(Term, Term)] -> Term
+subT t [] = t
+subT t (st:sts) = let (sub_by, sub_to) = st in subT (subTVar t sub_by sub_to) sts 
 
 type Meqn = (Set Term, MultiSet Term)
+
+subMeqn :: Meqn -> [(Term, Term)] -> Meqn
+subMeqn meqn st = let (s, m) = meqn in (s, MultiSet.map (\meqn' -> subT meqn' st) m)
 
 -- Predicate
 meqn_right_empty :: Meqn -> Bool
@@ -55,6 +69,10 @@ meqn_right_empty (_, m) = MultiSet.null m
 type T =  [Meqn]
 type U = Set Meqn
 type R = (T, U)
+
+subUAux :: U -> U -> [(Term, Term)] -> U
+subUAux u u_sub st   | null u = u_sub
+                    | otherwise = let (meqn, u_rest) = Set.deleteFindMin u in subUAux u_rest (Set.insert (subMeqn meqn st) u_sub) st
 
 -- Dec Part
 
@@ -132,22 +150,23 @@ removeMeqnWithNonemptyM u =
             Just (meqn, Set.fromList (m_empty_rest ++ m_nonempty))
 
 -- unify :: R -> Maybe T
-unify r =
-    let (t, u) = r in
-        if Set.null u then
-            return t
-        else
-            do
-                ((s, m), u_rest) <- removeMeqnWithNonemptyM u
-                (common_part, frontier) <- dec m
-                if any (meqnIntersect (s, m)) frontier then
-                    Nothing
-                else
+-- unify r =
+--     let (t, u) = r in
+--         if Set.null u then
+--             return t
+--         else
+--             do
+--                 ((s, m), u_rest) <- removeMeqnWithNonemptyM u
+--                 (common_part, frontier) <- dec m
+--                 if any (meqnIntersect (s, m)) frontier then
+--                     Nothing
+--                 else
 
-                    let u_meqn_reduced = (Set.union (Set.insert (s, MultiSet.singleton common_part) u_rest) frontier) in (
-                        do
-                            u_compactified <- compactify u_meqn_reduced
-                            return t
-                    )
+--                     let u_meqn_reduced = (Set.union u_rest frontier) in (
+--                         do
+--                             u_compactified <- compactify u_meqn_reduced
+--                             subU u_compactified
+--                             return (t ++ [(s, MultiSet.singleton common_part)])
+--                     )
 
 
