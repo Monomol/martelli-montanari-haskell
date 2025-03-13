@@ -173,8 +173,8 @@ removeMeqnWithNonemptyM :: U -> Maybe (Meqn, U)
 removeMeqnWithNonemptyM u =
     let (m_empty, m_nonempty) = (partition meqn_right_empty . Set.toList) u in
         do
-            (meqn, m_empty_rest) <- uncons m_nonempty
-            Just (meqn, Set.fromList (m_empty_rest ++ m_nonempty))
+            (meqn, m_nonempty_rest) <- uncons m_nonempty
+            Just (meqn, Set.fromList (m_empty ++ m_nonempty_rest))
 
 unify :: R -> Maybe T
 unify r =
@@ -209,13 +209,21 @@ extract_term (Var x) = x
 extract_term (Function x []) = x 
 extract_term (Function x xs) = x ++ encapsulate "(" ")" (map extract_term xs)
 
-print_sm :: (Term, Set Meqn) -> IO()
-print_sm (f, set_sm) = putStrLn ("Common part\n    " ++ extract_term f ++ "\nFrontier\n{\n" ++ print_set_sm (Set.elems set_sm) ++ "}")
-    where
-        print_m m = ((encapsulate "{ " " }") . (map extract_term) . Set.elems) m
-        print_s s = ((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) s
-        print_set_sm [] = ""
-        print_set_sm ((m, s):sm) = "    " ++ print_m m ++ " = " ++ print_s s ++ ",\n" ++ print_set_sm sm
+print_s :: Set Term -> IO()
+print_s s = putStr (((encapsulate "{ " " }") . (map extract_term) . Set.elems) s)
+
+print_m :: MultiSet Term -> IO()
+print_m m = putStr (((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) m)
+
+print_meqn :: Meqn -> IO()
+print_meqn (s, m) = putStr "    " >> print_m m >> putStr " = " >> print_s s >> putStrLn ","
+
+print_meqns :: [Meqn] -> IO()
+print_meqns [] = putStrLn ""
+print_meqns (meqn:sm) = print_meqn meqn >> print_meqns sm
+
+print_dec :: (Term, Set Meqn) -> IO()
+print_dec (f, set_sm) = putStrLn ("Common part\n    " ++ extract_term f ++ "\nFrontier\n{\n") >> print_meqns (Set.elems set_sm) >> putStrLn "}"
 
 input1 = (
     Function "f" [
