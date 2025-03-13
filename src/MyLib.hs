@@ -173,7 +173,7 @@ removeMeqnWithNonemptyM :: U -> Maybe (Meqn, U)
 removeMeqnWithNonemptyM u =
     let (m_empty, m_nonempty) = (partition meqn_right_empty . Set.toList) u in
         do
-            (meqn, m_empty_rest) <- uncons m_empty
+            (meqn, m_empty_rest) <- uncons m_nonempty
             Just (meqn, Set.fromList (m_empty_rest ++ m_nonempty))
 
 unify :: R -> Maybe T
@@ -216,3 +216,23 @@ print_sm (f, set_sm) = putStrLn ("Common part\n    " ++ extract_term f ++ "\nFro
         print_s s = ((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) s
         print_set_sm [] = ""
         print_set_sm ((m, s):sm) = "    " ++ print_m m ++ " = " ++ print_s s ++ ",\n" ++ print_set_sm sm
+
+input1 = (
+    Function "f" [
+        Var "x1", Function "g" [
+            Var "x2", Var "x3"
+            ],
+        Var "x2", Function "b" []
+    ])
+
+input2 = (
+    Function "f" [
+        Function "g" [
+            Function "h" [
+                Function "a" [], Var "x5"
+            ], Var "x2"
+        ],
+        Var "x1", Function "h" [
+            Function "a" [], Var "x4"
+            ],
+        Var "x4"])
