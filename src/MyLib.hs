@@ -129,7 +129,7 @@ decTerm m t =
 
 decNonvar m nonVarMultiset =
     let terms = (MultiSet.distinctElems) nonVarMultiset
--- TODO: here we allow multiple same symbols (say f with different arity) to have different arguments
+-- QQ: TODO: here we allow multiple same symbols (say f with different arity) to have different arguments
         termSymbols = (nub . map fHead) terms
         headTerm = head terms in (
             if hasSingleElem termSymbols then
@@ -180,7 +180,8 @@ unify :: R -> Maybe T
 unify r =
     let (t, u) = r in
         if Set.null u then
-            return t
+            -- QQ : Should the order correspond to paper? Generally, should I just care about equality?
+            return (reverse t)
         else
             do
                 ((s, m), u_rest) <- removeMeqnWithNonemptyM u
@@ -216,7 +217,7 @@ print_m :: MultiSet Term -> IO()
 print_m m = putStr (((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) m)
 
 print_meqn :: Meqn -> IO()
-print_meqn (s, m) = putStr "    " >> print_m m >> putStr " = " >> print_s s >> putStrLn ","
+print_meqn (s, m) = putStr "    " >> print_s s >> putStr " = " >> print_m m >> putStrLn ","
 
 print_meqns :: [Meqn] -> IO()
 print_meqns [] = putStrLn ""
@@ -224,6 +225,9 @@ print_meqns (meqn:sm) = print_meqn meqn >> print_meqns sm
 
 print_dec :: (Term, Set Meqn) -> IO()
 print_dec (f, set_sm) = putStrLn ("Common part\n    " ++ extract_term f ++ "\nFrontier\n{\n") >> print_meqns (Set.elems set_sm) >> putStrLn "}"
+
+print_T :: T -> IO()
+print_T t = putStrLn "T" >> print_meqns t
 
 input1 = (
     Function "f" [
