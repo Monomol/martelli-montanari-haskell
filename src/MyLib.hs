@@ -5,9 +5,6 @@ import Data.List
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Data.Tuple (swap)
-import Data.Maybe (fromJust, isNothing)
-
 import Data.MultiSet (MultiSet)
 import qualified Data.MultiSet as MultiSet
 
@@ -138,7 +135,7 @@ decNonvar m =
 
 -- (MultiSet.fromOccurList [(Function "g" [Var "x2",Var "x3"],1),(Function "g" [Function "h" [Function "a" [],Var "x5"],Var "x2"],1)]) 
 dec m =
-    let vNSplit@(varMultiset, nonVarMultiset) = splitVarNonVar m in (
+    let vNSplit@(varMultiset, _) = splitVarNonVar m in (
         if (not . MultiSet.null) varMultiset then 
             Just (MultiSet.findMin varMultiset, (Set.singleton . doubleMulSetToMeqn) vNSplit)
         else
@@ -151,9 +148,11 @@ dec m =
 
 -}
 
+-- QQ - What is the level that I should care for other users? If I use VarName instead of Term,
+-- then this function does not fail on a function name that may correspond to some variable name.
 compactifyByVar :: U -> Term -> Maybe U
 compactifyByVar u (Var x) = let (u_with_var, u_without_var) = Set.partition (\(s, _) -> Set.member (Var x) s) u in return (Set.union u_without_var ((Set.singleton . combineMeqns) u_with_var))
-compactifyByVar u _ = Nothing
+compactifyByVar _ _ = Nothing
 
 compactifyByVars :: U -> [Term] -> Maybe U
 compactifyByVars u [] = return u
@@ -242,23 +241,3 @@ print_T t = encapsulate_print "T\n[\n" (print_meqns t) "]\n"
 
 print_R :: R -> IO()
 print_R (t, u) = print_T t >> putStrLn "" >> print_U u
-
-input1 = (
-    Function "f" [
-        Var "x1", Function "g" [
-            Var "x2", Var "x3"
-            ],
-        Var "x2", Function "b" []
-    ])
-
-input2 = (
-    Function "f" [
-        Function "g" [
-            Function "h" [
-                Function "a" [], Var "x5"
-            ], Var "x2"
-        ],
-        Var "x1", Function "h" [
-            Function "a" [], Var "x4"
-            ],
-        Var "x4"])

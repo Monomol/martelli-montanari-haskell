@@ -132,20 +132,55 @@ terms_remove_unit1_output = ((Set.singleton (Var "x"), MultiSet.singleton (Funct
 test_terms_remove_unit1 :: Test
 test_terms_remove_unit1 = TestCase (assertEqual "" (Just terms_remove_unit1_output) (removeMeqnWithNonemptyM terms_remove_unit1_input))
 
+{-
+This test result directly does not correspond to the resolution on p. 268.
+This is caused by the nondeterministic nature of choice of multieqatuion 
+that is removed in step (1.1). The following unifier are checked by hand
+by me that they are equal.
+-}
+test_unify_terms_paper1_output :: T
+test_unify_terms_paper1_output = [
+    (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"],
+    MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)]),
+    (Set.fromList [Var "x1"],
+    MultiSet.fromOccurList [(Function "g" [Var "x2",Var "x2"],1)]),
+    (Set.fromList [Var "x2",Var "x3"],
+    MultiSet.fromOccurList [(Function "h" [Function "a" [],Var "x4"],1)]),
+    (Set.fromList [Var "x4",Var "x5"],
+    MultiSet.fromOccurList [(Function "b" [],1)])
+    ]
 
-tests :: Test
-tests = TestList [
+test_unify_terms_paper1 :: Test
+test_unify_terms_paper1 = TestCase (assertEqual "" (Just test_unify_terms_paper1_output) (unify (initR term_to_unify_paper1 term_to_unify_paper2)))
+
+dec_tests :: Test
+dec_tests = TestList [
     TestLabel "DEC Test paper" test_paper,
     TestLabel "DEC Unit 1" test_unit1,
-    TestLabel "DEC Unit 2" test_unit2,
-    
-    TestLabel "INIT R Test paper" test_initR,
-    
+    TestLabel "DEC Unit 2" test_unit2
+    ]
+
+unif_tests :: Test
+unif_tests = TestList [
     TestLabel "REMOVE MEQ FROM U Test paper" test_remove_paper_beginning,
-    TestLabel "REMOVE MEQ FROM U Unit 1" test_terms_remove_unit1
+    TestLabel "REMOVE MEQ FROM U Unit 1" test_terms_remove_unit1,
+
+    TestLabel "UNIFICATION ON P. 268" test_unify_terms_paper1
+    ]
+
+misc_tests :: Test
+misc_tests = TestList [
+    TestLabel "INIT R Test paper" test_initR
+    ]
+
+tests :: [Test]
+tests = [
+    dec_tests,
+    unif_tests,
+    misc_tests
     ]
 
 main :: IO ()
 main = do
-    result <- runTestTT tests
-    if failures result > 0 then Exit.exitFailure else Exit.exitSuccess
+    runned_tests <- mapM runTestTT tests
+    if (sum . map failures) runned_tests > 0 then Exit.exitFailure else Exit.exitSuccess
