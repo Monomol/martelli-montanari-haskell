@@ -2,6 +2,9 @@ module MyLib where
 
 import Data.List
 
+import Data.Map (Map)
+import qualified Data.Map as Map
+
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -43,14 +46,12 @@ fParams _ = error "not a function"
 
 -- QQ : This does not much correspond to your implementation from minuska, may be a good show point.
 -- QQ : Should I use maps? How close should the Haskell implementation resemble the Coq counterpart?
-subTVar :: Term -> VarName -> Term -> Term
-subTVar (Var y) x t' = if x == y then t' else (Var y)
-subTVar (Function s ts) x t' = Function s (map (\t -> subTVar t x t') ts)
 
-
-subT :: Term -> [(VarName, Term)] -> Term
-subT t [] = t
-subT t (st:sts) = let (sub_by, sub_to) = st in subT (subTVar t sub_by sub_to) sts 
+subT :: Term -> Map VarName Term -> Term
+subT v@(Var x) lt = case (Map.lookup x lt) of
+    Nothing -> v
+    Just t -> t
+subT (Function s ts) lt = Function s (map (\t -> subT t lt) ts)
 
 type Meqn = (Set Term, MultiSet Term)
 
@@ -63,8 +64,8 @@ combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, MultiSet.union m1 m2)
 combineMeqns :: (Foldable f) => f Meqn -> Meqn
 combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, MultiSet.empty) meqnToCombine
 
-subMeqn :: Meqn -> [(VarName, Term)] -> Meqn
-subMeqn meqn st = let (s, m) = meqn in (s, MultiSet.map (\meqn' -> subT meqn' st) m)
+subMeqn :: Meqn -> Map VarName Term -> Meqn
+subMeqn meqn lt = let (s, m) = meqn in (s, MultiSet.map (\meqn' -> subT meqn' lt) m)
 
 meqn_right_empty :: Meqn -> Bool
 meqn_right_empty (_, m) = MultiSet.null m
@@ -89,12 +90,12 @@ initR t t' =
         u_without_up = Set.map (\x -> (Set.singleton x, MultiSet.empty)) unique_vars_of_terms in ([],  Set.insert up u_without_up)
 
 -- QQ : Should I implement this using maps?
-subUAux :: U -> U -> [(VarName, Term)] -> U
-subUAux u u_sub st  | null u = u_sub
-                    | otherwise = let (meqn, u_rest) = Set.deleteFindMin u in subUAux u_rest (Set.insert (subMeqn meqn st) u_sub) st
+subUAux :: U -> U -> Map VarName Term -> U
+subUAux u u_sub lt  | null u = u_sub
+                    | otherwise = let (meqn, u_rest) = Set.deleteFindMin u in subUAux u_rest (Set.insert (subMeqn meqn lt) u_sub) lt
 
-subU :: U -> [(VarName, Term)] -> U
-subU u st = subUAux u (Set.empty) st
+subU :: U -> Map VarName Term -> U
+subU u lt = subUAux u (Set.empty) lt
 
 {-
 
@@ -133,7 +134,6 @@ decNonvar m =
                 Nothing
     )
 
--- (MultiSet.fromOccurList [(Function "g" [Var "x2",Var "x3"],1),(Function "g" [Function "h" [Function "a" [],Var "x5"],Var "x2"],1)]) 
 dec m =
     let vNSplit@(varMultiset, _) = splitVarNonVar m in (
         if (not . MultiSet.null) varMultiset then 
@@ -193,7 +193,7 @@ unify r =
                 if any (meqnIntersect (s, m)) frontier then
                     Nothing
                 else
-                    let sub = zip (map termHead (Set.toList s)) (repeat common_part)
+                    let sub = Map.fromList (zip (map termHead (Set.toList s)) (repeat common_part))
                         u_meqn_reduced = (Set.union u_rest frontier) in (
                         do
                             u_compactified <- compactify u_meqn_reduced
