@@ -19,7 +19,6 @@ import qualified Data.MultiSet as MultiSet
 type VarName = String
 type SymbolName = String
 
--- QQ : What types should I use? Should I as well generalize this and use just some type?
 data Term = Var VarName
     | Function SymbolName [Term]
     deriving (Show, Ord, Eq)
@@ -43,9 +42,6 @@ hasSingleElem _ = False
 fParams :: Term -> [Term]
 fParams (Function _ x) = x
 fParams _ = error "not a function"
-
--- QQ : This does not much correspond to your implementation from minuska, may be a good show point.
--- QQ : Should I use maps? How close should the Haskell implementation resemble the Coq counterpart?
 
 subT :: Term -> Map VarName Term -> Term
 subT v@(Var x) lt = case (Map.lookup x lt) of
@@ -74,7 +70,6 @@ type T =  [Meqn]
 type U = Set Meqn
 type R = (T, U)
 
--- for coq use function fresh
 uniqueTermName :: Term -> String
 uniqueTermName (Var x) = x
 uniqueTermName (Function x xs) = x ++ (concat . map uniqueTermName) xs
@@ -89,7 +84,6 @@ initR t t' =
         up = (Set.singleton (Var ((uniqueTermName t) ++ (uniqueTermName t'))), MultiSet.fromList [t, t'])
         u_without_up = Set.map (\x -> (Set.singleton x, MultiSet.empty)) unique_vars_of_terms in ([],  Set.insert up u_without_up)
 
--- QQ : Should I implement this using maps?
 subUAux :: U -> U -> Map VarName Term -> U
 subUAux u u_sub lt  | null u = u_sub
                     | otherwise = let (meqn, u_rest) = Set.deleteFindMin u in subUAux u_rest (Set.insert (subMeqn meqn lt) u_sub) lt
@@ -184,21 +178,24 @@ unify :: R -> Maybe T
 unify r =
     let (t, u) = r in
         if Set.null u then
-            -- QQ : Should the order correspond to paper? Generally, should I just care about equality?
             return (reverse t)
         else
             do
-                ((s, m), u_rest) <- removeMeqnWithNonemptyM u
-                (common_part, frontier) <- dec m
-                if any (meqnIntersect (s, m)) frontier then
-                    Nothing
-                else
-                    let sub = Map.fromList (zip (map termHead (Set.toList s)) (repeat common_part))
-                        u_meqn_reduced = (Set.union u_rest frontier) in (
-                        do
-                            u_compactified <- compactify u_meqn_reduced
-                            unify ((subMeqn (s, MultiSet.singleton common_part) sub):t, subU u_compactified sub)
-                    )
+                let removeRes = removeMeqnWithNonemptyM u in
+                    case removeRes of
+                        Nothing -> return (reverse t ++ Set.toList u)
+                        Just ((s, m), u_rest) ->
+                            do
+                                (common_part, frontier) <- dec m
+                                if any (meqnIntersect (s, m)) frontier then
+                                    Nothing
+                                else
+                                    let sub = Map.fromList (zip (map termHead (Set.toList s)) (repeat common_part))
+                                        u_meqn_reduced = (Set.union u_rest frontier) in (
+                                        do
+                                            u_compactified <- compactify u_meqn_reduced
+                                            unify ((subMeqn (s, MultiSet.singleton common_part) sub):t, subU u_compactified sub)
+                                        )
 
 {-
 
