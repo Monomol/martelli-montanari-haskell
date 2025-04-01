@@ -147,8 +147,8 @@ terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x
     (Set.singleton (Var "x5"), MultiSet.empty)
     ])
 
-test_remove_paper_beginning :: Test
-test_remove_paper_beginning = (Just terms_remove_paper_beginning_output) ~=? (removeMeqnWithNonemptyM terms_to_unify_paper_output)
+remove_paper_beginning :: Test
+remove_paper_beginning = (Just terms_remove_paper_beginning_output) ~=? (removeMeqnWithNonemptyM terms_to_unify_paper_output)
 
 terms_remove_dec_unit_input1 :: U
 terms_remove_dec_unit_input1 = Set.fromList [
@@ -162,8 +162,8 @@ terms_remove_dec_unit_output1 = ((Set.singleton (Var "x"), MultiSet.singleton (F
         (Set.singleton (Var "x1"), MultiSet.empty)
     ])
 
-test_terms_remove_unit1 :: Test
-test_terms_remove_unit1 = (Just terms_remove_dec_unit_output1) ~=? (removeMeqnWithNonemptyM terms_remove_dec_unit_input1)
+terms_remove_unit1 :: Test
+terms_remove_unit1 = (Just terms_remove_dec_unit_output1) ~=? (removeMeqnWithNonemptyM terms_remove_dec_unit_input1)
 
 {-
 This test result directly does not correspond to the resolution on p. 268.
@@ -171,8 +171,8 @@ This is caused by the nondeterministic nature of choice of multiequation
 that is removed in step (1.1). The following unifiers are checked by hand
 for equality. The following test keeps more familiar unifier.
 -}
-test_unify_terms_paper1_output :: T
-test_unify_terms_paper1_output = [
+unify_terms_paper1_output :: T
+unify_terms_paper1_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"],
     MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)]),
     (Set.fromList [Var "x1"],
@@ -183,11 +183,11 @@ test_unify_terms_paper1_output = [
     MultiSet.fromOccurList [(Function "b" [],1)])
     ]
 
-test_unify_terms_paper1 :: Test
-test_unify_terms_paper1 = (Just test_unify_terms_paper1_output) ~=? (unify (initR term_to_unify_paper1 term_to_unify_paper2))
+unify_terms_paper1 :: Test
+unify_terms_paper1 = (Just unify_terms_paper1_output) ~=? (unify (initR term_to_unify_paper1 term_to_unify_paper2))
 
-test_unify_terms_paper2_input :: R
-test_unify_terms_paper2_input = (
+unify_terms_paper2_input :: R
+unify_terms_paper2_input = (
     [(Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "h" [Function "a" [], Var "x4"], 1)]),
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)])
     ],
@@ -197,8 +197,8 @@ test_unify_terms_paper2_input = (
         (Set.fromList [Var "x4"], MultiSet.fromOccurList [(Function "b" [],1)]),
         (Set.fromList [Var "x5"], MultiSet.empty)]) 
 
-test_unify_terms_paper2_output :: T
-test_unify_terms_paper2_output = [
+unify_terms_paper2_output :: T
+unify_terms_paper2_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)]),
     (Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "h" [Function "a" [],Var "x4"],1)]),
     (Set.fromList [Var "x1"], MultiSet.fromOccurList [(Function "g" [Function "h" [Function "a" [],Var "x4"],Var "x3"],1)]),
@@ -207,7 +207,24 @@ test_unify_terms_paper2_output = [
     ]
 
 test_unify_terms_paper2 :: Test
-test_unify_terms_paper2 = (Just test_unify_terms_paper2_output) ~=? (unify test_unify_terms_paper2_input)
+test_unify_terms_paper2 = (Just unify_terms_paper2_output) ~=? (unify unify_terms_paper2_input)
+
+unify_terms1_input_term1 :: Term
+unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
+
+unify_terms1_input_term2 :: Term
+unify_terms1_input_term2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
+
+unify_terms1_output :: T
+unify_terms1_output = [
+    (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
+    (Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "k" [Function "d" [],Function "c" []],1)]),
+    (Set.fromList [Var "x3",Var "x5"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x4",Function "k" [Function "d" [],Function "c" []]],1)]),
+    (Set.fromList [Var "x1",Var "x4"], MultiSet.fromOccurList [(Function "b" [],1)])
+    ]
+
+unify_terms1 :: Test
+unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input_term1 unify_terms1_input_term2))
 
 dec_tests :: Test
 dec_tests = TestList [
@@ -218,8 +235,9 @@ dec_tests = TestList [
 
 unif_tests :: Test
 unif_tests = TestList [
-    TestLabel "UNIFICATION ON P. 268" test_unify_terms_paper1,
-    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" test_unify_terms_paper2
+    TestLabel "UNIFICATION ON P. 268" unify_terms_paper1,
+    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" test_unify_terms_paper2,
+    TestLabel "OWN TEST 1" unify_terms1
     ]
 
 misc_tests :: Test
@@ -230,8 +248,8 @@ misc_tests = TestList [
 
     TestLabel "INIT R Test paper" test_initR,
 
-    TestLabel "REMOVE MEQN FROM U Test paper" test_remove_paper_beginning,
-    TestLabel "REMOVE MEQN FROM U Unit 1" test_terms_remove_unit1
+    TestLabel "REMOVE MEQN FROM U Test paper" remove_paper_beginning,
+    TestLabel "REMOVE MEQN FROM U Unit 1" terms_remove_unit1
     ]
 
 tests :: Test
