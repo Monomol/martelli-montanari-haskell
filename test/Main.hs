@@ -64,6 +64,13 @@ dec_paper_output1 = Just (Function "f" [Var "x1", Function "g" [Var "x2",Var "x3
 dec_paper1 :: Test
 dec_paper1 = dec_paper_output1 ~=? (dec dec_paper_input1)
 
+-- This version of the algorithm does not incorporate diff check in dec
+dec_cycle1 :: Test 
+dec_cycle1 = (Just (Function "f" [Var "x1"], Set.fromList [(Set.fromList [Var "x1"],MultiSet.fromOccurList [(Function "f" [Var "x1"],1)])])) ~=? (dec (MultiSet.fromOccurList [((Function "f" [Var "x1"]), 1), ((Function "f" [Function "f" [Var "x1"]]), 1)]))
+
+dec_diff_symbols1 :: Test 
+dec_diff_symbols1 = Nothing ~=? (dec (MultiSet.fromOccurList [((Function "f" [Var "x1"]), 1), ((Function "g" [Var "x1"]), 1)]))
+
 -- test from p. 260
 substitution_paper_input1 :: Term
 substitution_paper_input1 = Function "f" [Var "x1", Function "g" [Var "x2"], Function "a" []]
@@ -206,8 +213,14 @@ unify_terms_paper2_output = [
     (Set.fromList [Var "x4",Var "x5"], MultiSet.fromOccurList [(Function "b" [],1)])
     ]
 
-test_unify_terms_paper2 :: Test
-test_unify_terms_paper2 = (Just unify_terms_paper2_output) ~=? (unify unify_terms_paper2_input)
+unify_terms_paper2 :: Test
+unify_terms_paper2 = (Just unify_terms_paper2_output) ~=? (unify unify_terms_paper2_input)
+
+unify_cycle1 :: Test 
+unify_cycle1 = Nothing ~=? (unify (initR (Function "f" [Var "x1"]) (Function "f" [Function "f" [Var "x1"]])))
+
+unify_diff_symbols1 :: Test 
+unify_diff_symbols1 = Nothing ~=? (unify (initR (Function "g" [Var "x1"]) (Function "f" [Var "x1"])))
 
 unify_terms1_input_term1 :: Term
 unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
@@ -229,6 +242,10 @@ unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input_t
 dec_tests :: Test
 dec_tests = TestList [
     TestLabel "DEC p. 264" dec_paper1,
+    
+    TestLabel "DEC CYCLE 1" dec_cycle1,
+    TestLabel "DEC FAIL DIFF SYMBOLS 1" dec_diff_symbols1,
+
     TestLabel "DEC Unit 1" dec_unit1,
     TestLabel "DEC Unit 2" dec_unit2
     ]
@@ -236,7 +253,11 @@ dec_tests = TestList [
 unif_tests :: Test
 unif_tests = TestList [
     TestLabel "UNIFICATION ON P. 268" unify_terms_paper1,
-    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" test_unify_terms_paper2,
+    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_terms_paper2,
+
+    TestLabel "UNIFY FAIL CYCLE 1" unify_cycle1,
+    TestLabel "UNIFY FAIL DIFF SYMBOLS 1" unify_diff_symbols1,
+
     TestLabel "OWN TEST 1" unify_terms1
     ]
 
