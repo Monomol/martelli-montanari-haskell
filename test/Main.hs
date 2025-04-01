@@ -228,6 +228,27 @@ unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Funct
 unify_terms1_input_term2 :: Term
 unify_terms1_input_term2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
 
+unify_naive1_input1 :: Term
+unify_naive1_input1 = Function "g" [Var "x1", Function "f" [Var "x2"], Function "f" [Function "f" [Var "x3"]], Function "f" [Function "f" [Function "f" [Var "x4"]]], Function "f" [Function "f" [Function "f" [Function "f" [Var "x4"]]]]]
+
+unify_naive1_input2 :: Term
+unify_naive1_input2 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]
+
+unify_naive1_output :: T
+unify_naive1_output = [
+    (Set.fromList [Var "gx1fx2ffx3fffx4ffffx4gx6x7x8x9x10"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x7",Var "x8",Var "x9",Var "x10"],1)]),
+    (Set.fromList [Var "x10"], MultiSet.fromOccurList [(Function "f" [Function "f" [Function "f" [Function "f" [Var "x4"]]]],1)]),
+    (Set.fromList [Var "x7"], MultiSet.fromOccurList [(Function "f" [Var "x2"],1)]),
+    (Set.fromList [Var "x8"], MultiSet.fromOccurList [(Function "f" [Function "f" [Var "x3"]],1)]),
+    (Set.fromList [Var "x9"], MultiSet.fromOccurList [(Function "f" [Function "f" [Function "f" [Var "x4"]]],1)]),
+    (Set.fromList [Var "x1", Var "x6"], MultiSet.fromOccurList []),
+    (Set.fromList [Var "x2"], MultiSet.fromOccurList []),
+    (Set.fromList [Var "x3"], MultiSet.fromOccurList []),
+    (Set.fromList [Var "x4"], MultiSet.fromOccurList [])]
+
+unify_naive1 :: Test
+unify_naive1 = (Just unify_naive1_output) ~=? (unify (initR unify_naive1_input1 unify_naive1_input2))
+
 unify_terms1_output :: T
 unify_terms1_output = [
     (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
@@ -258,6 +279,7 @@ unif_tests = TestList [
     TestLabel "UNIFY FAIL CYCLE 1" unify_cycle1,
     TestLabel "UNIFY FAIL DIFF SYMBOLS 1" unify_diff_symbols1,
 
+    TestLabel "UNIFY NAIVE 1" unify_naive1,
     TestLabel "OWN TEST 1" unify_terms1
     ]
 
