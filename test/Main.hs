@@ -249,6 +249,49 @@ unify_naive1_output = [
 unify_naive1 :: Test
 unify_naive1 = (Just unify_naive1_output) ~=? (unify (initR unify_naive1_input1 unify_naive1_input2))
 
+unify_naive2_input12 :: Term
+unify_naive2_input12 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]
+
+unify_naive2_output :: T
+unify_naive2_output = [
+    (Set.fromList [Var "gx6x7x8x9x10gx6x7x8x9x10"], MultiSet.fromOccurList [(Function "g" [Var "x6",Var "x7",Var "x8",Var "x9",Var "x10"],1)]),
+    (Set.fromList [Var "x10"], MultiSet.empty),
+    (Set.fromList [Var "x6"], MultiSet.empty),
+    (Set.fromList [Var "x7"], MultiSet.empty),
+    (Set.fromList [Var "x8"], MultiSet.empty),
+    (Set.fromList [Var "x9"], MultiSet.empty)]
+
+unify_naive2 :: Test
+unify_naive2 = (Just unify_naive2_output) ~=? (unify (initR unify_naive2_input12 unify_naive2_input12))
+
+unify_naive3_input1 :: Term
+unify_naive3_input1 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]
+
+unify_naive3_input2 :: Term
+unify_naive3_input2 = Function "g" [Var "x1", Var "x1", Var "x1", Var "x1", Var "x1"]
+
+unify_naive3_output :: T
+unify_naive3_output = [
+    (Set.fromList [Var "gx6x7x8x9x10gx1x1x1x1x1"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x1",Var "x1",Var "x1",Var "x1"],1)]),
+    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"], MultiSet.empty)]
+
+unify_naive3 :: Test
+unify_naive3 = (Just unify_naive3_output) ~=? (unify (initR unify_naive3_input1 unify_naive3_input2))
+
+unify_naive4_input1 :: Term
+unify_naive4_input1 = Function "g" [Var "x6", Var "x7", Function "a" [], Var "x9", Var "x10"]
+
+unify_naive4_input2 :: Term
+unify_naive4_input2 = Function "g" [Var "x1", Var "x1", Var "x1", Var "x1", Var "x1"]
+
+unify_naive4_output :: T
+unify_naive4_output = [
+    (Set.fromList [Var "gx6x7ax9x10gx1x1x1x1x1"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x1",Var "x1",Var "x1",Var "x1"],1)]),
+    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x9", Var "x10"], MultiSet.fromOccurList [(Function "a" [], 1)])]
+
+unify_naive4 :: Test
+unify_naive4 = (Just unify_naive4_output) ~=? (unify (initR unify_naive4_input1 unify_naive4_input2))
+
 unify_terms1_output :: T
 unify_terms1_output = [
     (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
@@ -280,6 +323,10 @@ unif_tests = TestList [
     TestLabel "UNIFY FAIL DIFF SYMBOLS 1" unify_diff_symbols1,
 
     TestLabel "UNIFY NAIVE 1" unify_naive1,
+    TestLabel "UNIFY NAIVE 2" unify_naive2,
+    TestLabel "UNIFY NAIVE 3" unify_naive3,
+    TestLabel "UNIFY NAIVE 4" unify_naive4,
+
     TestLabel "OWN TEST 1" unify_terms1
     ]
 
