@@ -70,7 +70,6 @@ library
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.17.2.1,
-        multiset^>=0.3.4.3,
         containers >= 0.6.7 && < 0.7,
         HUnit ^>=1.6.2
 
@@ -106,6 +105,5 @@ test-suite martelli-montanari-test
     build-depends:
         base ^>=4.17.2.1,
         HUnit ^>=1.6.2,
-        multiset^>=0.3.4.3,
         containers >= 0.6.7 && < 0.7,
         martelli-montanari

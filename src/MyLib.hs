@@ -8,9 +8,6 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Data.MultiSet (MultiSet)
-import qualified Data.MultiSet as MultiSet
-
 {-
 
 * BASIC TYPES AND ASSOCIATED FUNCTIONS *
@@ -49,22 +46,22 @@ subT v@(Var x) lt = case (Map.lookup x lt) of
     Just t -> t
 subT (Function s ts) lt = Function s (map (\t -> subT t lt) ts)
 
-type Meqn = (Set Term, MultiSet Term)
+type Meqn = (Set Term, [Term])
 
 meqnIntersect :: Meqn -> Meqn -> Bool
 meqnIntersect (s1, _) (s2, _) = (not . Set.disjoint s1) s2
 
 combineMeqn :: Meqn -> Meqn -> Meqn
-combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, MultiSet.union m1 m2)
+combineMeqn (s1, m1) (s2, m2) = (Set.union s1 s2, m1 ++ m2)
 
 combineMeqns :: (Foldable f) => f Meqn -> Meqn
-combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, MultiSet.empty) meqnToCombine
+combineMeqns meqnToCombine = foldl combineMeqn (Set.empty, []) meqnToCombine
 
 subMeqn :: Meqn -> Map VarName Term -> Meqn
-subMeqn meqn lt = let (s, m) = meqn in (s, MultiSet.map (\meqn' -> subT meqn' lt) m)
+subMeqn meqn lt = let (s, m) = meqn in (s, map (\meqn' -> subT meqn' lt) m)
 
 meqn_right_empty :: Meqn -> Bool
-meqn_right_empty (_, m) = MultiSet.null m
+meqn_right_empty (_, m) = null m
 
 type T =  [Meqn]
 type U = Set Meqn
@@ -81,8 +78,8 @@ varsOfTerm (Function _ xs) = (Set.unions . map varsOfTerm) xs
 initR :: Term -> Term -> R
 initR t t' =
     let unique_vars_of_terms = Set.union (varsOfTerm t) (varsOfTerm t')
-        up = (Set.singleton (Var ((uniqueTermName t) ++ (uniqueTermName t'))), MultiSet.fromList [t, t'])
-        u_without_up = Set.map (\x -> (Set.singleton x, MultiSet.empty)) unique_vars_of_terms in ([],  Set.insert up u_without_up)
+        up = (Set.singleton (Var ((uniqueTermName t) ++ (uniqueTermName t'))), [t, t'])
+        u_without_up = Set.map (\x -> (Set.singleton x, [])) unique_vars_of_terms in ([],  Set.insert up u_without_up)
 
 subUAux :: U -> U -> Map VarName Term -> U
 subUAux u u_sub lt  | null u = u_sub
@@ -97,33 +94,31 @@ subU u lt = subUAux u (Set.empty) lt
 
 -}
 
-splitVarNonVar :: MultiSet Term -> (MultiSet Term, MultiSet Term)
-splitVarNonVar x = MultiSet.partition isVar x
+splitVarNonVar :: [Term] -> ([Term], [Term])
+splitVarNonVar x = partition isVar x
 
-doubleMulSetToMeqn :: (MultiSet Term, MultiSet Term) -> (Set Term, MultiSet Term)
-doubleMulSetToMeqn (l, r) = (MultiSet.toSet l, r)
+doubleMulSetToMeqn :: ([Term], [Term]) -> (Set Term, [Term])
+doubleMulSetToMeqn (l, r) = (Set.fromList l, r)
 
-dec :: MultiSet Term -> Maybe (Term, Set Meqn)
-decTerm :: MultiSet Term -> Term -> Maybe (Term, Set Meqn)
-decNonvar :: MultiSet Term -> Maybe (Term, Set Meqn)
+dec :: [Term] -> Maybe (Term, Set Meqn)
+decNonvar :: [Term] -> Maybe (Term, Set Meqn)
+decTerm :: [Term] -> Term -> Maybe (Term, Set Meqn)
 
 decTerm m t =
     if isConstant t then
         Just (t, Set.empty)
     else
         do
-            termArgs <- sequence (MultiSet.fold (\x y -> (fParams x):y) [] m)
+            termArgs <- sequence (map fParams m)
             ithMs <- Just (transpose termArgs)
-            ithMMulSet <- Just (map MultiSet.fromList ithMs)
-            lt <- mapM dec ithMMulSet 
+            lt <- (mapM dec ithMs)
             (miCParams, miFrontEqs) <- Just (unzip lt)
             Just (Function (termHead t) miCParams, Set.unions miFrontEqs)
 
-decNonvar m =
-    let terms = (MultiSet.distinctElems) m
 -- QQ: TODO: here we allow multiple same symbols (say f with different arity) to have different arguments
-        termSymbols = (nub . map termHead) terms
-        headTerm = head terms in (
+decNonvar m =
+    let termSymbols = (nub . map termHead) m
+        headTerm = head m in (
             if hasSingleElem termSymbols then
                 decTerm m headTerm
             else
@@ -131,11 +126,11 @@ decNonvar m =
     )
 
 dec m =
-    let vNSplit@(varMultiset, _) = splitVarNonVar m in (
-        if MultiSet.null varMultiset then
+    let vNSplit@(varList, _) = splitVarNonVar m in (
+        if null varList then
             decNonvar m
         else
-            Just (MultiSet.findMin varMultiset, (Set.singleton . doubleMulSetToMeqn) vNSplit)
+            Just (head varList, (Set.singleton . doubleMulSetToMeqn) vNSplit)
     )
 
 {-
@@ -190,7 +185,7 @@ unify r =
                                         u_meqn_reduced = (Set.union u_rest frontier) in (
                                         do
                                             u_compactified <- compactify u_meqn_reduced
-                                            unify ((subMeqn (s, MultiSet.singleton common_part) sub):t, subU u_compactified sub)
+                                            unify ((subMeqn (s, [common_part]) sub):t, subU u_compactified sub)
                                         )
 
 {-
@@ -210,8 +205,8 @@ extract_term (Function x xs) = x ++ encapsulate "(" ")" (map extract_term xs)
 print_s :: Set Term -> IO()
 print_s s = putStr (((encapsulate "{ " " }") . (map extract_term) . Set.elems) s)
 
-print_m :: MultiSet Term -> IO()
-print_m m = putStr (((encapsulate "( " " )") . (map extract_term) . MultiSet.distinctElems) m)
+print_m :: [Term] -> IO()
+print_m m = putStr (((encapsulate "( " " )") . (map extract_term)) m)
 
 print_meqn :: Meqn -> IO()
 print_meqn (s, m) = putStr "    " >> print_s s >> putStr " = " >> print_m m >> putStrLn ","

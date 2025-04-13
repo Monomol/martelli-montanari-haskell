@@ -4,9 +4,6 @@ import MyLib
 
 import qualified Data.Set as Set
 
-import Data.MultiSet (MultiSet)
-import qualified Data.MultiSet as MultiSet
-
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -23,9 +20,9 @@ sSubTAux t (st:sts) = let (sub_by, sub_to) = st in sSubTAux (sSubTVar t sub_by s
 
 tToSubAux :: T -> [(VarName, Term)] -> [(VarName, Term)]
 tToSubAux [] res = res
-tToSubAux ((vs, tms):ts) res = if MultiSet.null tms
+tToSubAux ((vs, tms):ts) res = if null tms
     then tToSubAux ts (res ++ map (\x -> (termHead x, Set.findMin vs)) (Set.elems vs))
-    else tToSubAux ts (res ++ map (\x -> (termHead x, MultiSet.findMin tms)) (Set.elems vs))
+    else tToSubAux ts (res ++ map (\x -> (termHead x, head tms)) (Set.elems vs))
 
 
 tToSub :: T -> [(VarName, Term)]
@@ -34,8 +31,8 @@ tToSub t = tToSubAux t []
 sSubT :: Term -> T -> Term
 sSubT t tt = sSubTAux t (tToSub tt)
 
-dec_paper_input1 :: MultiSet Term
-dec_paper_input1 = MultiSet.fromList [
+dec_paper_input1 :: [Term]
+dec_paper_input1 = [
     Function "f"
         [
             Var "x1",
@@ -69,16 +66,17 @@ dec_paper_input1 = MultiSet.fromList [
 dec_paper_output1 :: Maybe (Term, U)
 dec_paper_output1 = Just (Function "f" [Var "x1", Function "g" [Var "x2",Var "x3"]],
     Set.fromList [
-        (Set.fromList [Var "x1"], MultiSet.fromOccurList [
-            (Function "h" [Var "x4"],1),
-            (Function "h" [Function "c" []],1)
+        (Set.fromList [Var "x1"], [
+            Function "h" [Function "c" []],
+            Function "h" [Var "x4"]
             ]
         ),
-        (Set.fromList [Var "x2", Var "x6"], MultiSet.fromOccurList [(Function "a" [],1)]),
-        (Set.fromList [Var "x3"], MultiSet.fromOccurList [
-            (Function "f" [Var "x5", Function "b" []],1),
-            (Function "f" [Function "b" [], Var "x5"],1)
-            ])
+        (Set.fromList [Var "x2", Var "x6"], [Function "a" []]),
+        (Set.fromList [Var "x3"], [
+            Function "f" [Var "x5", Function "b" []],
+            Function "f" [Function "b" [], Var "x5"]
+            ]
+        )
         ]
     )
 
@@ -87,10 +85,10 @@ dec_paper1 = dec_paper_output1 ~=? (dec dec_paper_input1)
 
 -- This version of the algorithm does not incorporate diff check in dec
 dec_cycle1 :: Test 
-dec_cycle1 = (Just (Function "f" [Var "x1"], Set.fromList [(Set.fromList [Var "x1"],MultiSet.fromOccurList [(Function "f" [Var "x1"],1)])])) ~=? (dec (MultiSet.fromOccurList [((Function "f" [Var "x1"]), 1), ((Function "f" [Function "f" [Var "x1"]]), 1)]))
+dec_cycle1 = (Just (Function "f" [Var "x1"], Set.fromList [(Set.fromList [Var "x1"], [Function "f" [Var "x1"]])])) ~=? (dec ([Function "f" [Var "x1"], Function "f" [Function "f" [Var "x1"]]]))
 
 dec_diff_symbols1 :: Test 
-dec_diff_symbols1 = Nothing ~=? (dec (MultiSet.fromOccurList [((Function "f" [Var "x1"]), 1), ((Function "g" [Var "x1"]), 1)]))
+dec_diff_symbols1 = Nothing ~=? (dec ([Function "f" [Var "x1"], Function "g" [Var "x1"]]))
 
 -- test from p. 260
 substitution_paper_input1 :: Term
@@ -123,20 +121,20 @@ substitution_paper_output3 = Function "f" [Function "h" [Function "b" []], Funct
 substitution_paper3 :: Test
 substitution_paper3 = substitution_paper_output3 ~=? subT (subT substitution_paper_input3 substitution_paper_input12_sub) substitution_paper_input12_sub
 
-dec_unit_input1 :: MultiSet Term
-dec_unit_input1 = MultiSet.fromList [
+dec_unit_input1 :: [Term]
+dec_unit_input1 = [
     Var "x1",
     Function "f" [Function "a" []]
     ]
 
 dec_unit_output1 :: Maybe (Term, U)
-dec_unit_output1 = Just (Var "x1", Set.fromList [ (Set.fromList [Var "x1"], MultiSet.fromList [Function "f" [Function "a" []]]) ] )
+dec_unit_output1 = Just (Var "x1", Set.fromList [ (Set.fromList [Var "x1"], [Function "f" [Function "a" []]]) ] )
 
 dec_unit1 :: Test
 dec_unit1 = dec_unit_output1 ~=? (dec dec_unit_input1)
 
-dec_unit_input2 :: MultiSet Term
-dec_unit_input2 = MultiSet.fromList [
+dec_unit_input2 :: [Term]
+dec_unit_input2 = [
     Function "f" [Function "a" []],
     Function "f" [Function "a" []]
     ]
@@ -155,24 +153,24 @@ term_to_unify_paper2 = Function "f" [Function "g" [Function "h" [Function "a" []
 
 terms_to_unify_paper_output :: U
 terms_to_unify_paper_output = Set.fromList [
-    (Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), MultiSet.fromList [term_to_unify_paper1, term_to_unify_paper2]),
-    (Set.singleton (Var "x1"), MultiSet.empty),
-    (Set.singleton (Var "x2"), MultiSet.empty),
-    (Set.singleton (Var "x3"), MultiSet.empty),
-    (Set.singleton (Var "x4"), MultiSet.empty),
-    (Set.singleton (Var "x5"), MultiSet.empty)
+    (Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [term_to_unify_paper1, term_to_unify_paper2]),
+    (Set.singleton (Var "x1"), []),
+    (Set.singleton (Var "x2"), []),
+    (Set.singleton (Var "x3"), []),
+    (Set.singleton (Var "x4"), []),
+    (Set.singleton (Var "x5"), [])
     ]
 
 test_initR :: Test
 test_initR = ([], terms_to_unify_paper_output) ~=? (initR term_to_unify_paper1 term_to_unify_paper2)
 
 terms_remove_paper_beginning_output :: (Meqn, U)
-terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), MultiSet.fromList [term_to_unify_paper1, term_to_unify_paper2]), Set.fromList [
-    (Set.singleton (Var "x1"), MultiSet.empty),
-    (Set.singleton (Var "x2"), MultiSet.empty),
-    (Set.singleton (Var "x3"), MultiSet.empty),
-    (Set.singleton (Var "x4"), MultiSet.empty),
-    (Set.singleton (Var "x5"), MultiSet.empty)
+terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [term_to_unify_paper1, term_to_unify_paper2]), Set.fromList [
+    (Set.singleton (Var "x1"), []),
+    (Set.singleton (Var "x2"), []),
+    (Set.singleton (Var "x3"), []),
+    (Set.singleton (Var "x4"), []),
+    (Set.singleton (Var "x5"), [])
     ])
 
 remove_paper_beginning :: Test
@@ -180,14 +178,14 @@ remove_paper_beginning = (Just terms_remove_paper_beginning_output) ~=? (removeM
 
 terms_remove_dec_unit_input1 :: U
 terms_remove_dec_unit_input1 = Set.fromList [
-    (Set.singleton (Var "x"), MultiSet.singleton (Function "f" [Var "x1", Var "x1", Var "x1"])),
-    (Set.singleton (Var "x1"), MultiSet.empty)
+    (Set.singleton (Var "x"), [Function "f" [Var "x1", Var "x1", Var "x1"]]),
+    (Set.singleton (Var "x1"), [])
     ]
 
 terms_remove_dec_unit_output1 :: (Meqn, U)
-terms_remove_dec_unit_output1 = ((Set.singleton (Var "x"), MultiSet.singleton (Function "f" [Var "x1", Var "x1", Var "x1"])),
+terms_remove_dec_unit_output1 = ((Set.singleton (Var "x"), [Function "f" [Var "x1", Var "x1", Var "x1"]]),
     Set.fromList [
-        (Set.singleton (Var "x1"), MultiSet.empty)
+        (Set.singleton (Var "x1"), [])
     ])
 
 terms_remove_unit1 :: Test
@@ -202,13 +200,13 @@ for equality. The following test keeps more familiar unifier.
 unify_terms_paper1_output :: T
 unify_terms_paper1_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"],
-    MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)]),
+    [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]]),
     (Set.fromList [Var "x1"],
-    MultiSet.fromOccurList [(Function "g" [Var "x2",Var "x2"],1)]),
+    [Function "g" [Var "x2",Var "x2"]]),
     (Set.fromList [Var "x2",Var "x3"],
-    MultiSet.fromOccurList [(Function "h" [Function "a" [],Var "x4"],1)]),
+    [Function "h" [Function "a" [],Var "x4"]]),
     (Set.fromList [Var "x4",Var "x5"],
-    MultiSet.fromOccurList [(Function "b" [],1)])
+    [Function "b" []])
     ]
 
 unify_terms_paper1 :: Test
