@@ -130,10 +130,10 @@ decNonvar m =
 
 dec m =
     let vNSplit@(varMultiset, _) = splitVarNonVar m in (
-        if (not . MultiSet.null) varMultiset then 
-            Just (MultiSet.findMin varMultiset, (Set.singleton . doubleMulSetToMeqn) vNSplit)
-        else
+        if MultiSet.null varMultiset then
             decNonvar m
+        else
+            Just (MultiSet.findMin varMultiset, (Set.singleton . doubleMulSetToMeqn) vNSplit)
     )
 
 {-
