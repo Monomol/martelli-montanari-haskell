@@ -338,6 +338,24 @@ unify_naive5 = (Just unify_naive5_output) ~=? (unify (initR unify_naive5_input1 
 unify_naive5_eq_sub :: Test
 unify_naive5_eq_sub = (sSubT unify_naive5_input1 unify_naive5_output) ~=? (sSubT unify_naive5_input2 unify_naive5_output)
 
+-- Even though this test seems the same to the previous, it has different behavior, since dec extract minimal element and "x10" < "x9", therefore there are two "x10" at the end of output 
+unify_naive6_input1 :: Term
+unify_naive6_input1 = Function "g" (map (\x -> Var ("x" ++ show x)) ([1..10] :: [Integer]))
+
+unify_naive6_input2 :: Term
+unify_naive6_input2 = Function "g" ((map (\x -> Var ("x" ++ show x)) ([2..10] :: [Integer])) ++ [Function "a" []])
+
+unify_naive6_output :: T
+unify_naive6_output = [(Set.fromList [Var ("g" ++ concat (map (\x -> "x" ++ show x) ([1..10] :: [Integer])) ++ "g" ++ concat (map (\x -> "x" ++ show x) ([2..10] :: [Integer])) ++ "a")],
+    MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6", Var "x7", Var "x8", Var "x10", Var "x10"],1)]),
+    (Set.fromList (map (\x -> Var ("x" ++ show x)) ([1..10] :: [Integer])), MultiSet.fromOccurList [(Function "a" [],1)])]
+
+unify_naive6 :: Test
+unify_naive6 = (Just unify_naive6_output) ~=? (unify (initR unify_naive6_input1 unify_naive6_input2))
+
+unify_naive6_eq_sub :: Test
+unify_naive6_eq_sub = (sSubT unify_naive6_input1 unify_naive6_output) ~=? (sSubT unify_naive6_input2 unify_naive6_output)
+
 unify_terms1_output :: T
 unify_terms1_output = [
     (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
@@ -388,6 +406,8 @@ unif_tests = TestList [
     TestLabel "UNIFY NAIVE 4 RESULT SUB EQUALITY" unify_naive4_eq_sub,
     TestLabel "UNIFY NAIVE 5" unify_naive5,
     TestLabel "UNIFY NAIVE 5 RESULT SUB EQUALITY" unify_naive5_eq_sub,
+    TestLabel "UNIFY NAIVE 6" unify_naive6,
+    TestLabel "UNIFY NAIVE 6 RESULT SUB EQUALITY" unify_naive6_eq_sub,
 
     TestLabel "OWN TEST 1" unify_terms1,
     TestLabel "OWN TEST 1 RESULT SUB EQUALITY" unify_terms1_eq_sub
