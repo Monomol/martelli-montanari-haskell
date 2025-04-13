@@ -39,9 +39,9 @@ hasSingleElem :: [a] -> Bool
 hasSingleElem [_] = True
 hasSingleElem _ = False
 
-fParams :: Term -> [Term]
-fParams (Function _ x) = x
-fParams _ = error "not a function"
+fParams :: Term -> Maybe [Term]
+fParams (Function _ x) = Just x
+fParams _ = Nothing
 
 subT :: Term -> Map VarName Term -> Term
 subT v@(Var x) lt = case (Map.lookup x lt) of
@@ -111,11 +111,13 @@ decTerm m t =
     if isConstant t then
         Just (t, Set.empty)
     else
-        let termArgs = MultiSet.fold (\x y -> (fParams x):y) [] m
-            ithM = transpose termArgs -- TODO: here used to be a reverse, but it shoul be useless as we dont care about positions but just purely about contents (the equalities);reverse undoes reversion in the previous fold
-            ithMMulSet = map MultiSet.fromList ithM in (
-                mapM dec ithMMulSet >>= (\lt -> Just (unzip lt)) >>= (\(miCParams, miFrontEqs) -> Just (Function (termHead t) miCParams, Set.unions miFrontEqs)) 
-        )
+        do
+            termArgs <- sequence (MultiSet.fold (\x y -> (fParams x):y) [] m)
+            ithMs <- Just (transpose termArgs)
+            ithMMulSet <- Just (map MultiSet.fromList ithMs)
+            lt <- mapM dec ithMMulSet 
+            (miCParams, miFrontEqs) <- Just (unzip lt)
+            Just (Function (termHead t) miCParams, Set.unions miFrontEqs)
 
 decNonvar m =
     let terms = (MultiSet.distinctElems) m
@@ -167,12 +169,6 @@ removeMeqnWithNonemptyM u =
         do
             (meqn, m_nonempty_rest) <- uncons m_nonempty
             Just (meqn, Set.fromList (m_empty ++ m_nonempty_rest))
-
-meqnValid :: Meqn -> Bool
-meqnValid (s, m) = s_valid && m_valid
-    where
-        s_valid = (not . Set.null) s && (Set.null . snd . Set.partition isVar) s
-        m_valid = (MultiSet.null . fst . MultiSet.partition isVar) m
 
 unify :: R -> Maybe T
 unify r =
