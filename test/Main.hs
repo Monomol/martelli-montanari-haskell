@@ -23,7 +23,10 @@ sSubTAux t (st:sts) = let (sub_by, sub_to) = st in sSubTAux (sSubTVar t sub_by s
 
 tToSubAux :: T -> [(VarName, Term)] -> [(VarName, Term)]
 tToSubAux [] res = res
-tToSubAux ((vs, tms):ts) res = tToSubAux ts (res ++ map (\x -> (termHead x, MultiSet.findMin tms)) (Set.elems vs))
+tToSubAux ((vs, tms):ts) res = if MultiSet.null tms
+    then tToSubAux ts (res ++ map (\x -> (termHead x, Set.findMin vs)) (Set.elems vs))
+    else tToSubAux ts (res ++ map (\x -> (termHead x, MultiSet.findMin tms)) (Set.elems vs))
+
 
 tToSub :: T -> [(VarName, Term)]
 tToSub t = tToSubAux t []
@@ -319,6 +322,22 @@ unify_naive4 = (Just unify_naive4_output) ~=? (unify (initR unify_naive4_input1 
 unify_naive4_eq_sub :: Test
 unify_naive4_eq_sub = (sSubT unify_naive4_input1 unify_naive4_output) ~=? (sSubT unify_naive4_input2 unify_naive4_output)
 
+unify_naive5_input1 :: Term
+unify_naive5_input1 = Function "g" [Var "x1", Var "x2", Var "x3", Var "x4", Var "x5", Var "x6"]
+
+unify_naive5_input2 :: Term
+unify_naive5_input2 = Function "g" [Var "x2", Var "x3", Var "x4", Var "x5", Var "x6", Function "a" []]
+
+unify_naive5_output :: T
+unify_naive5_output = [(Set.fromList [Var "gx1x2x3x4x5x6gx2x3x4x5x6a"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"],1)]),
+    (Set.fromList [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"], MultiSet.fromOccurList [(Function "a" [],1)])]
+
+unify_naive5 :: Test
+unify_naive5 = (Just unify_naive5_output) ~=? (unify (initR unify_naive5_input1 unify_naive5_input2))
+
+unify_naive5_eq_sub :: Test
+unify_naive5_eq_sub = (sSubT unify_naive5_input1 unify_naive5_output) ~=? (sSubT unify_naive5_input2 unify_naive5_output)
+
 unify_terms1_output :: T
 unify_terms1_output = [
     (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
@@ -367,6 +386,8 @@ unif_tests = TestList [
     TestLabel "UNIFY NAIVE 3 RESULT SUB EQUALITY" unify_naive3_eq_sub,
     TestLabel "UNIFY NAIVE 4" unify_naive4,
     TestLabel "UNIFY NAIVE 4 RESULT SUB EQUALITY" unify_naive4_eq_sub,
+    TestLabel "UNIFY NAIVE 5" unify_naive5,
+    TestLabel "UNIFY NAIVE 5 RESULT SUB EQUALITY" unify_naive5_eq_sub,
 
     TestLabel "OWN TEST 1" unify_terms1,
     TestLabel "OWN TEST 1 RESULT SUB EQUALITY" unify_terms1_eq_sub
