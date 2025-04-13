@@ -13,6 +13,24 @@ import qualified Data.Map as Map
 import Test.HUnit
 import qualified System.Exit as Exit
 
+sSubTVar :: Term -> VarName -> Term -> Term
+sSubTVar (Var y) x t' = if x == y then t' else (Var y)
+sSubTVar (Function s ts) x t' = Function s (map (\t -> sSubTVar t x t') ts)
+
+sSubTAux :: Term -> [(VarName, Term)] -> Term
+sSubTAux t [] = t
+sSubTAux t (st:sts) = let (sub_by, sub_to) = st in sSubTAux (sSubTVar t sub_by sub_to) sts 
+
+tToSubAux :: T -> [(VarName, Term)] -> [(VarName, Term)]
+tToSubAux [] res = res
+tToSubAux ((vs, tms):ts) res = tToSubAux ts (res ++ map (\x -> (termHead x, MultiSet.findMin tms)) (Set.elems vs))
+
+tToSub :: T -> [(VarName, Term)]
+tToSub t = tToSubAux t []
+
+sSubT :: Term -> T -> Term
+sSubT t tt = sSubTAux t (tToSub tt)
+
 dec_paper_input1 :: MultiSet Term
 dec_paper_input1 = MultiSet.fromList [
     Function "f"
@@ -193,6 +211,9 @@ unify_terms_paper1_output = [
 unify_terms_paper1 :: Test
 unify_terms_paper1 = (Just unify_terms_paper1_output) ~=? (unify (initR term_to_unify_paper1 term_to_unify_paper2))
 
+unify_terms_paper1_eq_sub :: Test
+unify_terms_paper1_eq_sub = (sSubT term_to_unify_paper1 unify_terms_paper1_output) ~=? (sSubT term_to_unify_paper2 unify_terms_paper1_output)
+
 unify_terms_paper2_input :: R
 unify_terms_paper2_input = (
     [(Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "h" [Function "a" [], Var "x4"], 1)]),
@@ -222,12 +243,6 @@ unify_cycle1 = Nothing ~=? (unify (initR (Function "f" [Var "x1"]) (Function "f"
 unify_diff_symbols1 :: Test 
 unify_diff_symbols1 = Nothing ~=? (unify (initR (Function "g" [Var "x1"]) (Function "f" [Var "x1"])))
 
-unify_terms1_input_term1 :: Term
-unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
-
-unify_terms1_input_term2 :: Term
-unify_terms1_input_term2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
-
 unify_naive1_input1 :: Term
 unify_naive1_input1 = Function "g" [Var "x1", Function "f" [Var "x2"], Function "f" [Function "f" [Var "x3"]], Function "f" [Function "f" [Function "f" [Var "x4"]]], Function "f" [Function "f" [Function "f" [Function "f" [Var "x4"]]]]]
 
@@ -249,6 +264,9 @@ unify_naive1_output = [
 unify_naive1 :: Test
 unify_naive1 = (Just unify_naive1_output) ~=? (unify (initR unify_naive1_input1 unify_naive1_input2))
 
+unify_naive1_eq_sub :: Test
+unify_naive1_eq_sub = (sSubT unify_naive1_input1 unify_naive1_output) ~=? (sSubT unify_naive1_input2 unify_naive1_output)
+
 unify_naive2_input12 :: Term
 unify_naive2_input12 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]
 
@@ -264,6 +282,9 @@ unify_naive2_output = [
 unify_naive2 :: Test
 unify_naive2 = (Just unify_naive2_output) ~=? (unify (initR unify_naive2_input12 unify_naive2_input12))
 
+unify_naive2_eq_sub :: Test
+unify_naive2_eq_sub = (sSubT unify_naive2_input12 unify_naive2_output) ~=? (sSubT unify_naive2_input12 unify_naive2_output)
+
 unify_naive3_input1 :: Term
 unify_naive3_input1 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]
 
@@ -277,6 +298,9 @@ unify_naive3_output = [
 
 unify_naive3 :: Test
 unify_naive3 = (Just unify_naive3_output) ~=? (unify (initR unify_naive3_input1 unify_naive3_input2))
+
+unify_naive3_eq_sub :: Test
+unify_naive3_eq_sub = (sSubT unify_naive3_input1 unify_naive3_output) ~=? (sSubT unify_naive3_input2 unify_naive3_output)
 
 unify_naive4_input1 :: Term
 unify_naive4_input1 = Function "g" [Var "x6", Var "x7", Function "a" [], Var "x9", Var "x10"]
@@ -292,6 +316,9 @@ unify_naive4_output = [
 unify_naive4 :: Test
 unify_naive4 = (Just unify_naive4_output) ~=? (unify (initR unify_naive4_input1 unify_naive4_input2))
 
+unify_naive4_eq_sub :: Test
+unify_naive4_eq_sub = (sSubT unify_naive4_input1 unify_naive4_output) ~=? (sSubT unify_naive4_input2 unify_naive4_output)
+
 unify_terms1_output :: T
 unify_terms1_output = [
     (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
@@ -300,8 +327,17 @@ unify_terms1_output = [
     (Set.fromList [Var "x1",Var "x4"], MultiSet.fromOccurList [(Function "b" [],1)])
     ]
 
+unify_terms1_input_term1 :: Term
+unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
+
+unify_terms1_input_term2 :: Term
+unify_terms1_input_term2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
+
 unify_terms1 :: Test
 unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input_term1 unify_terms1_input_term2))
+
+unify_terms1_eq_sub :: Test
+unify_terms1_eq_sub = (sSubT unify_terms1_input_term1 unify_terms1_output) ~=? (sSubT unify_terms1_input_term2 unify_terms1_output)
 
 dec_tests :: Test
 dec_tests = TestList [
@@ -317,17 +353,23 @@ dec_tests = TestList [
 unif_tests :: Test
 unif_tests = TestList [
     TestLabel "UNIFICATION ON P. 268" unify_terms_paper1,
+    TestLabel "UNIFICATION ON P. 268 RESULT SUB EQUALITY" unify_terms_paper1_eq_sub,
     TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_terms_paper2,
 
     TestLabel "UNIFY FAIL CYCLE 1" unify_cycle1,
     TestLabel "UNIFY FAIL DIFF SYMBOLS 1" unify_diff_symbols1,
 
     TestLabel "UNIFY NAIVE 1" unify_naive1,
+    TestLabel "UNIFY NAIVE 1 RESULT SUB EQUALITY" unify_naive1_eq_sub,
     TestLabel "UNIFY NAIVE 2" unify_naive2,
+    TestLabel "UNIFY NAIVE 2 RESULT SUB EQUALITY" unify_naive2_eq_sub,
     TestLabel "UNIFY NAIVE 3" unify_naive3,
+    TestLabel "UNIFY NAIVE 3 RESULT SUB EQUALITY" unify_naive3_eq_sub,
     TestLabel "UNIFY NAIVE 4" unify_naive4,
+    TestLabel "UNIFY NAIVE 4 RESULT SUB EQUALITY" unify_naive4_eq_sub,
 
-    TestLabel "OWN TEST 1" unify_terms1
+    TestLabel "OWN TEST 1" unify_terms1,
+    TestLabel "OWN TEST 1 RESULT SUB EQUALITY" unify_terms1_eq_sub
     ]
 
 misc_tests :: Test
