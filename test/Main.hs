@@ -192,8 +192,8 @@ terms_remove_unit1 :: Test
 terms_remove_unit1 = (Just terms_remove_dec_unit_output1) ~=? (removeMeqnWithNonemptyM terms_remove_dec_unit_input1)
 
 {-
-This test result directly does not correspond to the resolution on p. 268.
-This is caused by the nondeterministic nature of choice of multiequation 
+This test result directly do not correspond to the resolution on p. 268.
+This is caused by the different nature of choice of multiequation 
 that is removed in step (1.1). The following unifiers are checked by hand
 for equality. The following test keeps more familiar unifier.
 -}
@@ -202,7 +202,7 @@ unify_terms_paper1_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"],
     [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]]),
     (Set.fromList [Var "x1"],
-    [Function "g" [Var "x2",Var "x2"]]),
+    [Function "g" [Var "x2",Var "x3"]]),
     (Set.fromList [Var "x2",Var "x3"],
     [Function "h" [Function "a" [],Var "x4"]]),
     (Set.fromList [Var "x4",Var "x5"],
@@ -217,22 +217,22 @@ unify_terms_paper1_eq_sub = (sSubT term_to_unify_paper1 unify_terms_paper1_outpu
 
 unify_terms_paper2_input :: R
 unify_terms_paper2_input = (
-    [(Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "h" [Function "a" [], Var "x4"], 1)]),
-    (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)])
+    [(Set.fromList [Var "x2"], [Function "h" [Function "a" [], Var "x4"]]),
+    (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]])
     ],
     Set.fromList [
-        (Set.fromList [Var "x1"], MultiSet.fromOccurList [(Function "g" [Function "h" [Function "a" [], Var "x5"], Function "h" [Function "a" [], Var "x4"]],1), (Function "g" [Function "h" [Function "a" [], Var "x4"], Var "x3"], 1) ]),
-        (Set.fromList [Var "x3"], MultiSet.empty),
-        (Set.fromList [Var "x4"], MultiSet.fromOccurList [(Function "b" [],1)]),
-        (Set.fromList [Var "x5"], MultiSet.empty)]) 
+        (Set.fromList [Var "x1"], [Function "g" [Function "h" [Function "a" [], Var "x5"], Function "h" [Function "a" [], Var "x4"]], Function "g" [Function "h" [Function "a" [], Var "x4"], Var "x3"] ]),
+        (Set.fromList [Var "x3"], []),
+        (Set.fromList [Var "x4"], [Function "b" []]),
+        (Set.fromList [Var "x5"], [])]) 
 
 unify_terms_paper2_output :: T
 unify_terms_paper2_output = [
-    (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"],1)]),
-    (Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "h" [Function "a" [],Var "x4"],1)]),
-    (Set.fromList [Var "x1"], MultiSet.fromOccurList [(Function "g" [Function "h" [Function "a" [],Var "x4"],Var "x3"],1)]),
-    (Set.fromList [Var "x3"], MultiSet.fromOccurList [(Function "h" [Function "a" [],Var "x4"],1)]),
-    (Set.fromList [Var "x4",Var "x5"], MultiSet.fromOccurList [(Function "b" [],1)])
+    (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]]),
+    (Set.fromList [Var "x2"], [Function "h" [Function "a" [],Var "x4"]]),
+    (Set.fromList [Var "x1"], [Function "g" [Function "h" [Function "a" [],Var "x5"],Var "x3"]]),
+    (Set.fromList [Var "x3"], [Function "h" [Function "a" [],Var "x4"]]),
+    (Set.fromList [Var "x4",Var "x5"], [Function "b" []])
     ]
 
 unify_terms_paper2 :: Test
@@ -252,15 +252,15 @@ unify_naive1_input2 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var 
 
 unify_naive1_output :: T
 unify_naive1_output = [
-    (Set.fromList [Var "gx1fx2ffx3fffx4ffffx4gx6x7x8x9x10"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x7",Var "x8",Var "x9",Var "x10"],1)]),
-    (Set.fromList [Var "x10"], MultiSet.fromOccurList [(Function "f" [Function "f" [Function "f" [Function "f" [Var "x4"]]]],1)]),
-    (Set.fromList [Var "x7"], MultiSet.fromOccurList [(Function "f" [Var "x2"],1)]),
-    (Set.fromList [Var "x8"], MultiSet.fromOccurList [(Function "f" [Function "f" [Var "x3"]],1)]),
-    (Set.fromList [Var "x9"], MultiSet.fromOccurList [(Function "f" [Function "f" [Function "f" [Var "x4"]]],1)]),
-    (Set.fromList [Var "x1", Var "x6"], MultiSet.fromOccurList []),
-    (Set.fromList [Var "x2"], MultiSet.fromOccurList []),
-    (Set.fromList [Var "x3"], MultiSet.fromOccurList []),
-    (Set.fromList [Var "x4"], MultiSet.fromOccurList [])]
+    (Set.fromList [Var "gx1fx2ffx3fffx4ffffx4gx6x7x8x9x10"], [Function "g" [Var "x1",Var "x7",Var "x8",Var "x9",Var "x10"]]),
+    (Set.fromList [Var "x10"], [Function "f" [Function "f" [Function "f" [Function "f" [Var "x4"]]]]]),
+    (Set.fromList [Var "x7"], [Function "f" [Var "x2"]]),
+    (Set.fromList [Var "x8"], [Function "f" [Function "f" [Var "x3"]]]),
+    (Set.fromList [Var "x9"], [Function "f" [Function "f" [Function "f" [Var "x4"]]]]),
+    (Set.fromList [Var "x1", Var "x6"], []),
+    (Set.fromList [Var "x2"], []),
+    (Set.fromList [Var "x3"], []),
+    (Set.fromList [Var "x4"], [])]
 
 unify_naive1 :: Test
 unify_naive1 = (Just unify_naive1_output) ~=? (unify (initR unify_naive1_input1 unify_naive1_input2))
@@ -273,12 +273,12 @@ unify_naive2_input12 = Function "g" [Var "x6", Var "x7", Var "x8", Var "x9", Var
 
 unify_naive2_output :: T
 unify_naive2_output = [
-    (Set.fromList [Var "gx6x7x8x9x10gx6x7x8x9x10"], MultiSet.fromOccurList [(Function "g" [Var "x6",Var "x7",Var "x8",Var "x9",Var "x10"],1)]),
-    (Set.fromList [Var "x10"], MultiSet.empty),
-    (Set.fromList [Var "x6"], MultiSet.empty),
-    (Set.fromList [Var "x7"], MultiSet.empty),
-    (Set.fromList [Var "x8"], MultiSet.empty),
-    (Set.fromList [Var "x9"], MultiSet.empty)]
+    (Set.fromList [Var "gx6x7x8x9x10gx6x7x8x9x10"], [Function "g" [Var "x6",Var "x7",Var "x8",Var "x9",Var "x10"]]),
+    (Set.fromList [Var "x10"], []),
+    (Set.fromList [Var "x6"], []),
+    (Set.fromList [Var "x7"], []),
+    (Set.fromList [Var "x8"], []),
+    (Set.fromList [Var "x9"], [])]
 
 unify_naive2 :: Test
 unify_naive2 = (Just unify_naive2_output) ~=? (unify (initR unify_naive2_input12 unify_naive2_input12))
@@ -294,8 +294,8 @@ unify_naive3_input2 = Function "g" [Var "x1", Var "x1", Var "x1", Var "x1", Var 
 
 unify_naive3_output :: T
 unify_naive3_output = [
-    (Set.fromList [Var "gx6x7x8x9x10gx1x1x1x1x1"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x1",Var "x1",Var "x1",Var "x1"],1)]),
-    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"], MultiSet.empty)]
+    (Set.fromList [Var "gx6x7x8x9x10gx1x1x1x1x1"], [Function "g" [Var "x6",Var "x7",Var "x8",Var "x9",Var "x10"]]),
+    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"], [])]
 
 unify_naive3 :: Test
 unify_naive3 = (Just unify_naive3_output) ~=? (unify (initR unify_naive3_input1 unify_naive3_input2))
@@ -311,8 +311,8 @@ unify_naive4_input2 = Function "g" [Var "x1", Var "x1", Var "x1", Var "x1", Var 
 
 unify_naive4_output :: T
 unify_naive4_output = [
-    (Set.fromList [Var "gx6x7ax9x10gx1x1x1x1x1"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x1",Var "x1",Var "x1",Var "x1"],1)]),
-    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x9", Var "x10"], MultiSet.fromOccurList [(Function "a" [], 1)])]
+    (Set.fromList [Var "gx6x7ax9x10gx1x1x1x1x1"], [Function "g" [Var "x6",Var "x7",Var "x1",Var "x9",Var "x10"]]),
+    (Set.fromList [Var "x1", Var "x6", Var "x7", Var "x9", Var "x10"], [Function "a" []])]
 
 unify_naive4 :: Test
 unify_naive4 = (Just unify_naive4_output) ~=? (unify (initR unify_naive4_input1 unify_naive4_input2))
@@ -327,8 +327,8 @@ unify_naive5_input2 :: Term
 unify_naive5_input2 = Function "g" [Var "x2", Var "x3", Var "x4", Var "x5", Var "x6", Function "a" []]
 
 unify_naive5_output :: T
-unify_naive5_output = [(Set.fromList [Var "gx1x2x3x4x5x6gx2x3x4x5x6a"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"],1)]),
-    (Set.fromList [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"], MultiSet.fromOccurList [(Function "a" [],1)])]
+unify_naive5_output = [(Set.fromList [Var "gx1x2x3x4x5x6gx2x3x4x5x6a"], [Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"]]),
+    (Set.fromList [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6"], [Function "a" []])]
 
 unify_naive5 :: Test
 unify_naive5 = (Just unify_naive5_output) ~=? (unify (initR unify_naive5_input1 unify_naive5_input2))
@@ -345,8 +345,8 @@ unify_naive6_input2 = Function "g" ((map (\x -> Var ("x" ++ show x)) ([2..10] ::
 
 unify_naive6_output :: T
 unify_naive6_output = [(Set.fromList [Var ("g" ++ concat (map (\x -> "x" ++ show x) ([1..10] :: [Integer])) ++ "g" ++ concat (map (\x -> "x" ++ show x) ([2..10] :: [Integer])) ++ "a")],
-    MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6", Var "x7", Var "x8", Var "x10", Var "x10"],1)]),
-    (Set.fromList (map (\x -> Var ("x" ++ show x)) ([1..10] :: [Integer])), MultiSet.fromOccurList [(Function "a" [],1)])]
+    [Function "g" [Var "x1",Var "x2",Var "x3",Var "x4",Var "x5",Var "x6", Var "x7", Var "x8", Var "x9", Var "x10"]]),
+    (Set.fromList (map (\x -> Var ("x" ++ show x)) ([1..10] :: [Integer])), [Function "a" []])]
 
 unify_naive6 :: Test
 unify_naive6 = (Just unify_naive6_output) ~=? (unify (initR unify_naive6_input1 unify_naive6_input2))
@@ -356,10 +356,10 @@ unify_naive6_eq_sub = (sSubT unify_naive6_input1 unify_naive6_output) ~=? (sSubT
 
 unify_terms1_output :: T
 unify_terms1_output = [
-    (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], MultiSet.fromOccurList [(Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"],1)]),
-    (Set.fromList [Var "x2"], MultiSet.fromOccurList [(Function "k" [Function "d" [],Function "c" []],1)]),
-    (Set.fromList [Var "x3",Var "x5"], MultiSet.fromOccurList [(Function "g" [Var "x1",Var "x4",Function "k" [Function "d" [],Function "c" []]],1)]),
-    (Set.fromList [Var "x1",Var "x4"], MultiSet.fromOccurList [(Function "b" [],1)])
+    (Set.fromList [Var "fx1gx1bx2x2hx3gbx4x2fx4x5kdchx5x5"], [Function "f" [Var "x1",Var "x5",Var "x2",Function "h" [Var "x3"],Var "x5"]]),
+    (Set.fromList [Var "x2"], [Function "k" [Function "d" [],Function "c" []]]),
+    (Set.fromList [Var "x3",Var "x5"], [Function "g" [Var "x1",Var "x4",Function "k" [Function "d" [],Function "c" []]]]),
+    (Set.fromList [Var "x1",Var "x4"], [Function "b" []])
     ]
 
 unify_terms1_input_term1 :: Term
