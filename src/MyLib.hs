@@ -109,10 +109,10 @@ decTerm m t =
         Just (t, Set.empty)
     else
         do
-            termArgs <- sequence (map fParams m)
+            termArgs <- mapM fParams m
             ithMs <- Just (transpose termArgs)
-            lt <- (mapM dec ithMs)
-            (miCParams, miFrontEqs) <- Just (unzip lt)
+            ithMsDeced <- (mapM dec ithMs)
+            (miCParams, miFrontEqs) <- Just (unzip ithMsDeced)
             Just (Function (termHead t) miCParams, Set.unions miFrontEqs)
 
 -- QQ: TODO: here we allow multiple same symbols (say f with different arity) to have different arguments
