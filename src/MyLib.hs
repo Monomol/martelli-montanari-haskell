@@ -188,6 +188,16 @@ unify r =
                                             unify ((subMeqn (s, [common_part]) sub):t, subU u_compactified sub)
                                         )
 
+extract_sub_aux :: T -> Map VarName Term -> Map VarName Term
+extract_sub_aux [] sub = sub
+extract_sub_aux ((s, m):xs) sub =
+    let (_, m_sub) = subMeqn (s, m) sub 
+        new_sub = Set.foldr (\(Var x) -> Map.insert x (head m_sub)) sub s in
+            extract_sub_aux xs new_sub
+
+extract_sub :: T -> Map VarName Term
+extract_sub t = extract_sub_aux (reverse t) Map.empty
+
 {-
 
 * PRINTING *

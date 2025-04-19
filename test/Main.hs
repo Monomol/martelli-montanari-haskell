@@ -145,15 +145,15 @@ dec_unit_output2 = Just (Function "f" [Function "a" []], Set.empty)
 dec_unit2 :: Test
 dec_unit2 = dec_unit_output2 ~=? (dec dec_unit_input2)
 
-term_to_unify_paper1 :: Term
-term_to_unify_paper1 = Function "f" [Var "x1", Function "g" [Var "x2", Var "x3"], Var "x2", Function "b" []]
+unify_paper1_input1 :: Term
+unify_paper1_input1 = Function "f" [Var "x1", Function "g" [Var "x2", Var "x3"], Var "x2", Function "b" []]
 
-term_to_unify_paper2 :: Term
-term_to_unify_paper2 = Function "f" [Function "g" [Function "h" [Function "a" [], Var "x5"], Var "x2"], Var "x1", Function "h" [Function "a" [], Var "x4"], Var "x4"]
+unify_paper1_input2 :: Term
+unify_paper1_input2 = Function "f" [Function "g" [Function "h" [Function "a" [], Var "x5"], Var "x2"], Var "x1", Function "h" [Function "a" [], Var "x4"], Var "x4"]
 
 terms_to_unify_paper_output :: U
 terms_to_unify_paper_output = Set.fromList [
-    (Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [term_to_unify_paper1, term_to_unify_paper2]),
+    (Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [unify_paper1_input1, unify_paper1_input2]),
     (Set.singleton (Var "x1"), []),
     (Set.singleton (Var "x2"), []),
     (Set.singleton (Var "x3"), []),
@@ -162,10 +162,10 @@ terms_to_unify_paper_output = Set.fromList [
     ]
 
 test_initR :: Test
-test_initR = ([], terms_to_unify_paper_output) ~=? (initR term_to_unify_paper1 term_to_unify_paper2)
+test_initR = ([], terms_to_unify_paper_output) ~=? (initR unify_paper1_input1 unify_paper1_input2)
 
 terms_remove_paper_beginning_output :: (Meqn, U)
-terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [term_to_unify_paper1, term_to_unify_paper2]), Set.fromList [
+terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [unify_paper1_input1, unify_paper1_input2]), Set.fromList [
     (Set.singleton (Var "x1"), []),
     (Set.singleton (Var "x2"), []),
     (Set.singleton (Var "x3"), []),
@@ -197,8 +197,8 @@ This is caused by the different nature of choice of multiequation
 that is removed in step (1.1). The following unifiers are checked by hand
 for equality. The following test keeps more familiar unifier.
 -}
-unify_terms_paper1_output :: T
-unify_terms_paper1_output = [
+unify_paper1_output :: T
+unify_paper1_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"],
     [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]]),
     (Set.fromList [Var "x1"],
@@ -210,10 +210,10 @@ unify_terms_paper1_output = [
     ]
 
 unify_terms_paper1 :: Test
-unify_terms_paper1 = (Just unify_terms_paper1_output) ~=? (unify (initR term_to_unify_paper1 term_to_unify_paper2))
+unify_terms_paper1 = (Just unify_paper1_output) ~=? (unify (initR unify_paper1_input1 unify_paper1_input2))
 
 unify_terms_paper1_eq_sub :: Test
-unify_terms_paper1_eq_sub = (sSubT term_to_unify_paper1 unify_terms_paper1_output) ~=? (sSubT term_to_unify_paper2 unify_terms_paper1_output)
+unify_terms_paper1_eq_sub = (sSubT unify_paper1_input1 unify_paper1_output) ~=? (sSubT unify_paper1_input2 unify_paper1_output)
 
 unify_terms_paper2_input :: R
 unify_terms_paper2_input = (
