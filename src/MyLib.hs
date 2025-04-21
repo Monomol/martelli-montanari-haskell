@@ -192,7 +192,7 @@ extract_sub_aux :: T -> Map VarName Term -> Map VarName Term
 extract_sub_aux [] sub = sub
 extract_sub_aux ((s, m):xs) sub =
     let (_, m_sub) = subMeqn (s, m) sub 
-        new_sub = Set.foldr (\(Var x) -> Map.insert x (head m_sub)) sub s in
+        new_sub = if null m_sub then sub else Set.foldr (\(Var x) -> Map.insert x (head m_sub)) sub s in
             extract_sub_aux xs new_sub
 
 extract_sub :: T -> Map VarName Term

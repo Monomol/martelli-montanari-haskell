@@ -374,6 +374,44 @@ unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input_t
 unify_terms1_eq_sub :: Test
 unify_terms1_eq_sub = (sSubT unify_terms1_input_term1 unify_terms1_output) ~=? (sSubT unify_terms1_input_term2 unify_terms1_output)
 
+-- mgu from p. 267
+unify_paper3_input :: R
+unify_paper3_input = ([],
+    Set.fromList [
+        (Set.fromList [Var "x1"], []),
+        (Set.fromList [Var "x2"], []),
+        (Set.fromList [Var "x3"], []),
+        (Set.fromList [Var "x4"], [Function "h" [Var "x3", Function "h" [Var "x2", Var "x2"]], Function "h" [Function "h" [Function "h" [Var "x1", Var "x1"], Var "x2"], Var "x3"]])
+        ])
+
+unify_paper3_output :: T
+unify_paper3_output = [
+    (Set.fromList [Var "x4"],[Function "h" [Var "x3",Var "x3"]]),
+    (Set.fromList [Var "x3"],[Function "h" [Var "x2",Var "x2"]]),
+    (Set.fromList [Var "x2"],[Function "h" [Var "x1",Var "x1"]]),
+    (Set.fromList [Var "x1"],[]
+    )]
+
+unify_paper3 :: Test
+unify_paper3 = (Just unify_paper3_output) ~=? (unify unify_paper3_input)
+
+extract_sub_paper1_input :: T
+extract_sub_paper1_input = [
+    (Set.fromList [Var "x4"],[Function "h" [Var "x3",Var "x3"]]),
+    (Set.fromList [Var "x3"],[Function "h" [Var "x2",Var "x2"]]),
+    (Set.fromList [Var "x2"],[Function "h" [Var "x1",Var "x1"]]),
+    (Set.fromList [Var "x1"],[]
+    )]
+
+extract_sub_paper1_output :: Map VarName Term
+extract_sub_paper1_output = Map.fromList [
+    ("x2",Function "h" [Var "x1",Var "x1"]),
+    ("x3",Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]]),
+    ("x4",Function "h" [Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]],Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]]])]
+
+extract_sub_paper1 :: Test
+extract_sub_paper1 = extract_sub_paper1_output ~=? (extract_sub extract_sub_paper1_input)
+
 dec_tests :: Test
 dec_tests = TestList [
     TestLabel "DEC p. 264" dec_paper1,
@@ -390,6 +428,7 @@ unif_tests = TestList [
     TestLabel "UNIFICATION ON P. 268" unify_terms_paper1,
     TestLabel "UNIFICATION ON P. 268 RESULT SUB EQUALITY" unify_terms_paper1_eq_sub,
     TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_terms_paper2,
+    TestLabel "UNIFICATION ON P. 267" unify_paper3,
 
     TestLabel "UNIFY FAIL CYCLE 1" unify_cycle1,
     TestLabel "UNIFY FAIL DIFF SYMBOLS 1" unify_diff_symbols1,
@@ -420,7 +459,9 @@ misc_tests = TestList [
     TestLabel "INIT R Test paper" test_initR,
 
     TestLabel "REMOVE MEQN FROM U Test paper" remove_paper_beginning,
-    TestLabel "REMOVE MEQN FROM U Unit 1" terms_remove_unit1
+    TestLabel "REMOVE MEQN FROM U Unit 1" terms_remove_unit1,
+
+    TestLabel "EXTRACT SUB FROM T PAPER 1" extract_sub_paper1
     ]
 
 tests :: Test
