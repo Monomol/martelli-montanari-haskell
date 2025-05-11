@@ -115,7 +115,7 @@ decTerm m t =
             (miCParams, miFrontEqs) <- Just (unzip ithMsDeced)
             Just (Function (termHead t) miCParams, Set.unions miFrontEqs)
 
--- QQ: TODO: here we allow multiple same symbols (say f with different arity) to have different arguments
+-- Note that here we allow for multiple same symbols (say f with different arity) to have different arguments. The user is expected to provide valid inputs.
 decNonvar m =
     let termSymbols = (nub . map termHead) m
         headTerm = head m in (
@@ -185,7 +185,7 @@ unify r =
                                         u_meqn_reduced = (Set.union u_rest frontier) in (
                                         do
                                             u_compactified <- compactify u_meqn_reduced
-                                            unify ((subMeqn (s, [common_part]) sub):t, subU u_compactified sub)
+                                            unify ((s, [common_part]):t, subU u_compactified sub)
                                         )
 
 extract_sub_aux :: T -> Map VarName Term -> Map VarName Term
