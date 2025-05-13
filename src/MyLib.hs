@@ -188,15 +188,15 @@ unify r =
                                             unify ((s, [common_part]):t, subU u_compactified sub)
                                         )
 
-extract_sub_aux :: T -> Map VarName Term -> Map VarName Term
-extract_sub_aux [] sub = sub
-extract_sub_aux ((s, m):xs) sub =
+extractSubAux :: T -> Map VarName Term -> Map VarName Term
+extractSubAux [] sub = sub
+extractSubAux ((s, m):xs) sub =
     let (_, m_sub) = subMeqn (s, m) sub 
         new_sub = if null m_sub then sub else Set.foldr (\(Var x) -> Map.insert x (head m_sub)) sub s in
-            extract_sub_aux xs new_sub
+            extractSubAux xs new_sub
 
-extract_sub :: T -> Map VarName Term
-extract_sub t = extract_sub_aux (reverse t) Map.empty
+extractSub :: T -> Map VarName Term
+extractSub t = extractSubAux (reverse t) Map.empty
 
 {-
 
@@ -207,35 +207,35 @@ extract_sub t = extract_sub_aux (reverse t) Map.empty
 encapsulate :: String -> String -> [String] -> String
 encapsulate l r xs = l ++ (intercalate ", ") xs ++ r
 
-extract_term :: Term -> String
-extract_term (Var x) = x
-extract_term (Function x []) = x 
-extract_term (Function x xs) = x ++ encapsulate "(" ")" (map extract_term xs)
+termToString :: Term -> String
+termToString (Var x) = x
+termToString (Function x []) = x 
+termToString (Function x xs) = x ++ encapsulate "(" ")" (map termToString xs)
 
-print_s :: Set Term -> IO()
-print_s s = putStr (((encapsulate "{ " " }") . (map extract_term) . Set.elems) s)
+printS :: Set Term -> IO()
+printS s = putStr (((encapsulate "{ " " }") . (map termToString) . Set.elems) s)
 
-print_m :: [Term] -> IO()
-print_m m = putStr (((encapsulate "( " " )") . (map extract_term)) m)
+printM :: [Term] -> IO()
+printM m = putStr (((encapsulate "( " " )") . (map termToString)) m)
 
-print_meqn :: Meqn -> IO()
-print_meqn (s, m) = putStr "    " >> print_s s >> putStr " = " >> print_m m >> putStrLn ","
+printMeqn :: Meqn -> IO()
+printMeqn (s, m) = putStr "    " >> printS s >> putStr " = " >> printM m >> putStrLn ","
 
-print_meqns :: [Meqn] -> IO()
-print_meqns [] = putStr ""
-print_meqns (meqn:sm) = print_meqn meqn >> print_meqns sm
+printMeqns :: [Meqn] -> IO()
+printMeqns [] = putStr ""
+printMeqns (meqn:sm) = printMeqn meqn >> printMeqns sm
 
-encapsulate_print :: String -> IO() -> String -> IO()
-encapsulate_print left to_print right = putStr left >> to_print >> putStr right
+encapsulatePrint :: String -> IO() -> String -> IO()
+encapsulatePrint left to_print right = putStr left >> to_print >> putStr right
 
-print_dec :: (Term, Set Meqn) -> IO()
-print_dec (f, set_sm) = encapsulate_print ("Common part\n    " ++ extract_term f ++ "\nFrontier\n{\n") (print_meqns (Set.elems set_sm)) "}"
+printDec :: (Term, Set Meqn) -> IO()
+printDec (f, set_sm) = encapsulatePrint ("Common part\n    " ++ termToString f ++ "\nFrontier\n{\n") (printMeqns (Set.elems set_sm)) "}"
 
-print_U :: U -> IO()
-print_U u = encapsulate_print "U\n{\n" (print_meqns (Set.elems u)) "}\n"
+printU :: U -> IO()
+printU u = encapsulatePrint "U\n{\n" (printMeqns (Set.elems u)) "}\n"
 
-print_T :: T -> IO()
-print_T t = encapsulate_print "T\n[\n" (print_meqns t) "]\n"
+printT :: T -> IO()
+printT t = encapsulatePrint "T\n[\n" (printMeqns t) "]\n"
 
 print_R :: R -> IO()
-print_R (t, u) = print_T t >> putStrLn "" >> print_U u
+print_R (t, u) = printT t >> putStrLn "" >> printU u

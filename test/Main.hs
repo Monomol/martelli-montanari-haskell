@@ -151,8 +151,8 @@ unify_paper1_input1 = Function "f" [Var "x1", Function "g" [Var "x2", Var "x3"],
 unify_paper1_input2 :: Term
 unify_paper1_input2 = Function "f" [Function "g" [Function "h" [Function "a" [], Var "x5"], Var "x2"], Var "x1", Function "h" [Function "a" [], Var "x4"], Var "x4"]
 
-terms_to_unify_paper_output :: U
-terms_to_unify_paper_output = Set.fromList [
+initR_paper1_output :: U
+initR_paper1_output = Set.fromList [
     (Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [unify_paper1_input1, unify_paper1_input2]),
     (Set.singleton (Var "x1"), []),
     (Set.singleton (Var "x2"), []),
@@ -162,10 +162,10 @@ terms_to_unify_paper_output = Set.fromList [
     ]
 
 test_initR :: Test
-test_initR = ([], terms_to_unify_paper_output) ~=? (initR unify_paper1_input1 unify_paper1_input2)
+test_initR = ([], initR_paper1_output) ~=? (initR unify_paper1_input1 unify_paper1_input2)
 
-terms_remove_paper_beginning_output :: (Meqn, U)
-terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [unify_paper1_input1, unify_paper1_input2]), Set.fromList [
+remove_paper1_output :: (Meqn, U)
+remove_paper1_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x1hax4x4"), [unify_paper1_input1, unify_paper1_input2]), Set.fromList [
     (Set.singleton (Var "x1"), []),
     (Set.singleton (Var "x2"), []),
     (Set.singleton (Var "x3"), []),
@@ -173,23 +173,23 @@ terms_remove_paper_beginning_output = ((Set.singleton (Var "fx1gx2x3x2bfghax5x2x
     (Set.singleton (Var "x5"), [])
     ])
 
-remove_paper_beginning :: Test
-remove_paper_beginning = (Just terms_remove_paper_beginning_output) ~=? (removeMeqnWithNonemptyM terms_to_unify_paper_output)
+remove_paper1 :: Test
+remove_paper1 = (Just remove_paper1_output) ~=? (removeMeqnWithNonemptyM initR_paper1_output)
 
-terms_remove_dec_unit_input1 :: U
-terms_remove_dec_unit_input1 = Set.fromList [
+remove_unit_input1 :: U
+remove_unit_input1 = Set.fromList [
     (Set.singleton (Var "x"), [Function "f" [Var "x1", Var "x1", Var "x1"]]),
     (Set.singleton (Var "x1"), [])
     ]
 
-terms_remove_dec_unit_output1 :: (Meqn, U)
-terms_remove_dec_unit_output1 = ((Set.singleton (Var "x"), [Function "f" [Var "x1", Var "x1", Var "x1"]]),
+remove_unit_output1 :: (Meqn, U)
+remove_unit_output1 = ((Set.singleton (Var "x"), [Function "f" [Var "x1", Var "x1", Var "x1"]]),
     Set.fromList [
         (Set.singleton (Var "x1"), [])
     ])
 
-terms_remove_unit1 :: Test
-terms_remove_unit1 = (Just terms_remove_dec_unit_output1) ~=? (removeMeqnWithNonemptyM terms_remove_dec_unit_input1)
+remove_unit1 :: Test
+remove_unit1 = (Just remove_unit_output1) ~=? (removeMeqnWithNonemptyM remove_unit_input1)
 
 {-
 This test result directly do not correspond to the resolution on p. 268.
@@ -209,14 +209,14 @@ unify_paper1_output = [
     [Function "b" []])
     ]
 
-unify_terms_paper1 :: Test
-unify_terms_paper1 = (Just unify_paper1_output) ~=? (unify (initR unify_paper1_input1 unify_paper1_input2))
+unify_paper1 :: Test
+unify_paper1 = (Just unify_paper1_output) ~=? (unify (initR unify_paper1_input1 unify_paper1_input2))
 
-unify_terms_paper1_eq_sub :: Test
-unify_terms_paper1_eq_sub = (sSubT unify_paper1_input1 unify_paper1_output) ~=? (sSubT unify_paper1_input2 unify_paper1_output)
+unify_paper1_eq_sub :: Test
+unify_paper1_eq_sub = (sSubT unify_paper1_input1 unify_paper1_output) ~=? (sSubT unify_paper1_input2 unify_paper1_output)
 
-unify_terms_paper2_input :: R
-unify_terms_paper2_input = (
+unify_paper2_input :: R
+unify_paper2_input = (
     [(Set.fromList [Var "x2"], [Function "h" [Function "a" [], Var "x4"]]),
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]])
     ],
@@ -226,8 +226,8 @@ unify_terms_paper2_input = (
         (Set.fromList [Var "x4"], [Function "b" []]),
         (Set.fromList [Var "x5"], [])]) 
 
-unify_terms_paper2_output :: T
-unify_terms_paper2_output = [
+unify_paper2_output :: T
+unify_paper2_output = [
     (Set.fromList [Var "fx1gx2x3x2bfghax5x2x1hax4x4"], [Function "f" [Var "x1",Var "x1",Var "x2",Var "x4"]]),
     (Set.fromList [Var "x2"], [Function "h" [Function "a" [],Var "x4"]]),
     (Set.fromList [Var "x1"], [Function "g" [Function "h" [Function "a" [],Var "x5"],Var "x3"]]),
@@ -235,8 +235,8 @@ unify_terms_paper2_output = [
     (Set.fromList [Var "x4",Var "x5"], [Function "b" []])
     ]
 
-unify_terms_paper2 :: Test
-unify_terms_paper2 = (Just unify_terms_paper2_output) ~=? (unify unify_terms_paper2_input)
+unify_paper2 :: Test
+unify_paper2 = (Just unify_paper2_output) ~=? (unify unify_paper2_input)
 
 unify_cycle1 :: Test 
 unify_cycle1 = Nothing ~=? (unify (initR (Function "f" [Var "x1"]) (Function "f" [Function "f" [Var "x1"]])))
@@ -362,17 +362,17 @@ unify_terms1_output = [
     (Set.fromList [Var "x1",Var "x4"], [Function "b" []])
     ]
 
-unify_terms1_input_term1 :: Term
-unify_terms1_input_term1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
+unify_terms1_input1 :: Term
+unify_terms1_input1 = Function "f" [Var "x1", Function "g" [Var "x1", Function "b" [], Var "x2"], Var "x2", Function "h" [Var "x3"], Function "g" [Function "b" [], Var "x4", Var "x2"]]
 
-unify_terms1_input_term2 :: Term
-unify_terms1_input_term2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
+unify_terms1_input2 :: Term
+unify_terms1_input2 = Function "f" [Var "x4", Var "x5", Function "k" [Function "d" [], Function "c" []], Function "h" [Var "x5"], Var "x5"]
 
 unify_terms1 :: Test
-unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input_term1 unify_terms1_input_term2))
+unify_terms1 = (Just unify_terms1_output) ~=? (unify (initR unify_terms1_input1 unify_terms1_input2))
 
 unify_terms1_eq_sub :: Test
-unify_terms1_eq_sub = (sSubT unify_terms1_input_term1 unify_terms1_output) ~=? (sSubT unify_terms1_input_term2 unify_terms1_output)
+unify_terms1_eq_sub = (sSubT unify_terms1_input1 unify_terms1_output) ~=? (sSubT unify_terms1_input2 unify_terms1_output)
 
 -- mgu from p. 267
 unify_paper3_input :: R
@@ -410,7 +410,7 @@ extract_sub_paper1_output = Map.fromList [
     ("x4",Function "h" [Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]],Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]]])]
 
 extract_sub_paper1 :: Test
-extract_sub_paper1 = extract_sub_paper1_output ~=? (extract_sub extract_sub_paper1_input)
+extract_sub_paper1 = extract_sub_paper1_output ~=? (extractSub extract_sub_paper1_input)
 
 dec_tests :: Test
 dec_tests = TestList [
@@ -425,9 +425,9 @@ dec_tests = TestList [
 
 unif_tests :: Test
 unif_tests = TestList [
-    TestLabel "UNIFICATION ON P. 268" unify_terms_paper1,
-    TestLabel "UNIFICATION ON P. 268 RESULT SUB EQUALITY" unify_terms_paper1_eq_sub,
-    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_terms_paper2,
+    TestLabel "UNIFICATION ON P. 268" unify_paper1,
+    TestLabel "UNIFICATION ON P. 268 RESULT SUB EQUALITY" unify_paper1_eq_sub,
+    TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_paper2,
     TestLabel "UNIFICATION ON P. 267" unify_paper3,
 
     TestLabel "UNIFY FAIL CYCLE 1" unify_cycle1,
@@ -458,8 +458,8 @@ misc_tests = TestList [
 
     TestLabel "INIT R Test paper" test_initR,
 
-    TestLabel "REMOVE MEQN FROM U Test paper" remove_paper_beginning,
-    TestLabel "REMOVE MEQN FROM U Unit 1" terms_remove_unit1,
+    TestLabel "REMOVE MEQN FROM U Test paper" remove_paper1,
+    TestLabel "REMOVE MEQN FROM U Unit 1" remove_unit1,
 
     TestLabel "EXTRACT SUB FROM T PAPER 1" extract_sub_paper1
     ]
