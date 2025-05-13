@@ -2,6 +2,8 @@ module Main (main) where
 
 import MyLib
 
+import Data.Maybe (fromJust)
+
 import qualified Data.Set as Set
 
 import Data.Map (Map)
@@ -215,6 +217,30 @@ unify_paper1 = (Just unify_paper1_output) ~=? (unify (initR unify_paper1_input1 
 unify_paper1_eq_sub :: Test
 unify_paper1_eq_sub = (sSubT unify_paper1_input1 unify_paper1_output) ~=? (sSubT unify_paper1_input2 unify_paper1_output)
 
+unify_paper1_extract_sub_output :: Map VarName Term
+unify_paper1_extract_sub_output = Map.fromList [
+    ("fx1gx2x3x2bfghax5x2x1hax4x4",
+    Function "f" [
+        Function "g" [
+            Function "h" [Function "a" [],Function "b" []],
+            Function "h" [Function "a" [],Function "b" []]],
+            Function "g" [Function "h" [Function "a" [],Function "b" []],
+            Function "h" [Function "a" [],Function "b" []]],
+            Function "h" [Function "a" [],Function "b" []],Function "b" []]),
+    ("x1",
+    Function "g" [
+        Function "h" [Function "a" [],Function "b" []],
+        Function "h" [Function "a" [],Function "b" []]]),
+    ("x2",
+    Function "h" [
+        Function "a" [],Function "b" []]),
+    ("x3",Function "h" [Function "a" [],Function "b" []]),
+    ("x4",Function "b" []),("x5",Function "b" [])
+    ]
+
+unify_paper1_extract_sub :: Test
+unify_paper1_extract_sub = unify_paper1_extract_sub_output ~=? (extractMgu . fromJust . unify) (initR unify_paper1_input1 unify_paper1_input2)
+
 unify_paper2_input :: R
 unify_paper2_input = (
     [(Set.fromList [Var "x2"], [Function "h" [Function "a" [], Var "x4"]]),
@@ -410,7 +436,7 @@ extract_sub_paper1_output = Map.fromList [
     ("x4",Function "h" [Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]],Function "h" [Function "h" [Var "x1",Var "x1"],Function "h" [Var "x1",Var "x1"]]])]
 
 extract_sub_paper1 :: Test
-extract_sub_paper1 = extract_sub_paper1_output ~=? (extractSub extract_sub_paper1_input)
+extract_sub_paper1 = extract_sub_paper1_output ~=? (extractMgu extract_sub_paper1_input)
 
 dec_tests :: Test
 dec_tests = TestList [
@@ -427,6 +453,7 @@ unif_tests :: Test
 unif_tests = TestList [
     TestLabel "UNIFICATION ON P. 268" unify_paper1,
     TestLabel "UNIFICATION ON P. 268 RESULT SUB EQUALITY" unify_paper1_eq_sub,
+    TestLabel "UNIFICATION ON P. 268 RESULT MGU EXTRACTED" unify_paper1_extract_sub,
     TestLabel "UNIFICATION ON P. 268 stepped one step (better keeps order following the paper)" unify_paper2,
     TestLabel "UNIFICATION ON P. 267" unify_paper3,
 
